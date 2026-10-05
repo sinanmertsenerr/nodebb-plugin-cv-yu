@@ -354,6 +354,22 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     }
 }
 
+// Üst çubuk biraz daha sıkı: CV seçici en fazla 140px (uzun ad … ile kısalır), ikon düğmeler 32px, sekmeler dar
+@container (max-width: 1499.98px) {
+    .cv-top-left select {
+        max-width: 140px;
+        text-overflow: ellipsis;
+    }
+
+    .cv-top-left .cvb-icon {
+        width: 32px;
+    }
+
+    .cv-top-mid .cv-seg-item {
+        padding: 0 6px;
+    }
+}
+
 @container (max-width: 1239.98px) {
     .cv-actions--top .cvb span {
         display: none;
