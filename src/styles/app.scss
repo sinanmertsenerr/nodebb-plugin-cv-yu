@@ -337,6 +337,34 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     display: none;
 }
 
+// Üst çubukta her şey aynı boyda (36px) ve aynı çizgide: seçici, ikon düğmeler, sekmeler, butonlar
+.cv-top .cv-choice {
+    margin: 0;
+}
+
+.cv-top .cv-seg {
+    margin-top: 0;
+    padding: 2px;
+}
+
+.cv-top .cvf-input--sm {
+    height: 36px;
+    min-height: 36px;
+}
+
+.cv-top .cvb,
+.cv-top .cvb-icon {
+    height: 36px;
+    min-height: 36px;
+}
+
+// Üç buton eşit genişlikte (en genişine göre)
+.cv-actions--top {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+}
+
 // Üst çubuk kutunun genişliğine göre sıkışır (forumun yan çubukları açık/kapalı fark etmez):
 // önce "Şablon / CV dili" yazıları ve kayıt yeri yazısı gider, en dar hâlde butonlarda yalnız ikon kalır (ipucu durur)
 .cv-app {
