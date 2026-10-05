@@ -293,7 +293,7 @@ function SectionCard({ t, profile, update, section, open, onToggle, sort }) {
 	const setSection = patch => update(d => ({ ...d, sections: d.sections.map(s => (s.type === type ? { ...s, ...patch } : s)) }));
 	const bodyId = `${profile.id}-sec-${type}`;
 	return (
-		<section class={`cv-card ${section.visible ? '' : 'cv-card--hidden'}`} data-sort-item>
+		<section class={`cv-card ${section.visible ? '' : 'cv-card--hidden'}`} data-sort-item data-acc={type}>
 			<div class="cv-card-head">
 				<Grip label={t('sort.section', t(`section.${type}`))} sortKey={type} sort={sort} />
 				<button type="button" class="cv-card-toggle" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
@@ -317,27 +317,25 @@ function SectionCard({ t, profile, update, section, open, onToggle, sort }) {
 	);
 }
 
-export function Editor({ t, profile, update }) {
-	const [open, setOpen] = useState({ personal: true });
-	const toggle = key => setOpen(o => ({ ...o, [key]: !o[key] }));
+export function Editor({ t, profile, update, openKey, onToggle }) {
 	const sections = profile.data.sections;
 	const sort = useSortable((from, to) => update(d => ({ ...d, sections: moveItem(d.sections, from, to) })));
 	return (
 		<div class="cv-editor">
-			<section class="cv-card">
+			<section class="cv-card" data-acc="personal">
 				<div class="cv-card-head">
-					<button type="button" class="cv-card-toggle" aria-expanded={!!open.personal} aria-controls={`${profile.id}-sec-personal`} onClick={() => toggle('personal')}>
-						<Icon name={open.personal ? 'chevron-down' : 'chevron-right'} />
+					<button type="button" class="cv-card-toggle" aria-expanded={openKey === 'personal'} aria-controls={`${profile.id}-sec-personal`} onClick={() => onToggle('personal')}>
+						<Icon name={openKey === 'personal' ? 'chevron-down' : 'chevron-right'} />
 						<span class="cv-card-title">{t('section.personal')}</span>
 					</button>
 				</div>
-				{open.personal ? <div class="cv-card-body" id={`${profile.id}-sec-personal`}><PersonalForm t={t} profile={profile} update={update} /></div> : null}
+				{openKey === 'personal' ? <div class="cv-card-body" id={`${profile.id}-sec-personal`}><PersonalForm t={t} profile={profile} update={update} /></div> : null}
 			</section>
 			<h2 class="cv-editor-h">{t('sections.title')}</h2>
 			<p class="cvf-hint cv-editor-help">{t('sections.help')}</p>
 			<div class="cv-sortable">
 				{sections.map(s => (
-					<SectionCard key={s.type} t={t} profile={profile} update={update} section={s} open={!!open[s.type]} onToggle={() => toggle(s.type)} sort={sort} />
+					<SectionCard key={s.type} t={t} profile={profile} update={update} section={s} open={openKey === s.type} onToggle={() => onToggle(s.type)} sort={sort} />
 				))}
 			</div>
 		</div>

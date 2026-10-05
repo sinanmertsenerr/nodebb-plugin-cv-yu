@@ -105,7 +105,6 @@ function App({ ctx }) {
 	const [zoom, setZoom] = useState('fit');
 	const [pageCount, setPageCount] = useState(1);
 	const [tab, setTab] = useState('edit');
-	const [themeOpen, setThemeOpen] = useState(false);
 	const [menu, setMenu] = useState(false);
 	const [renaming, setRenaming] = useState(false);
 	const [dialog, setDialog] = useState(null);
@@ -181,6 +180,32 @@ function App({ ctx }) {
 	}, [state.profiles, state.account.enabled]);
 
 	const active = state.activeId ? state.profiles[state.activeId] : null;
+
+	// Sol panel akordeon gibi çalışır: aynı anda tek kart açık, liste kısa kalır.
+	// İlk açılışta kişisel bilgiler boşsa o açılır; doluysa hepsi kapalı başlar ve bölüm listesi görünür.
+	const [openKey, setOpenKey] = useState(undefined);
+	const sideRef = useRef(null);
+	useEffect(() => {
+		if (openKey !== undefined || !active) return;
+		const name = active.data.personal.name;
+		setOpenKey(name && name.trim() ? null : 'personal');
+	}, [active, openKey]);
+	const toggleOpen = useCallback(key => setOpenKey(k => (k === key ? null : key)), []);
+	// Açılan kart görünür kalsın: üstteki uzun kart kapanınca ekrandan kaçarsa ya da çok aşağıdaysa panelin üstüne getir
+	useLayoutEffect(() => {
+		const side = sideRef.current;
+		if (!side || !openKey) return;
+		const card = side.querySelector(`[data-acc="${openKey}"]`);
+		if (!card) return;
+		const inPanel = getComputedStyle(side).overflowY !== 'visible' && side.scrollHeight > side.clientHeight;
+		const top = card.getBoundingClientRect().top;
+		if (inPanel) {
+			const delta = top - side.getBoundingClientRect().top - 4;
+			if (delta < 0 || delta > side.clientHeight * 0.4) side.scrollTop += delta;
+		} else if (top < 64) {
+			window.scrollBy(0, top - 64); // telefonda sayfa kayar; üstteki yapışkan sekmelerin altında kalsın
+		}
+	}, [openKey]);
 	const setProfile = useCallback((profile) => { dirty.current.add(profile.id); dispatch({ type: 'profile', profile }); }, []);
 	const update = useCallback(fn => setProfile({ ...active, data: fn(active.data) }), [active, setProfile]);
 	const setSettings = patch => setProfile({ ...active, settings: { ...active.settings, ...patch } });
@@ -357,18 +382,18 @@ function App({ ctx }) {
 			</div>
 
 			<div class="cv-body">
-				<aside class="cv-side" data-sort-scroll>
+				<aside class="cv-side" data-sort-scroll ref={sideRef}>
 					{needsBackup ? <div class="cv-banner"><Icon name="download" /><span>{t('storage.backupHint')}</span><button type="button" class="cvb cvb--sm cvb--secondary" onClick={exportJSON}>{t('toolbar.export')}</button></div> : null}
-					<section class="cv-card">
+					<section class="cv-card" data-acc="theme">
 						<div class="cv-card-head">
-							<button type="button" class="cv-card-toggle" aria-expanded={themeOpen} aria-controls={`${active.id}-theme`} onClick={() => setThemeOpen(o => !o)}>
-								<Icon name={themeOpen ? 'chevron-down' : 'chevron-right'} />
+							<button type="button" class="cv-card-toggle" aria-expanded={openKey === 'theme'} aria-controls={`${active.id}-theme`} onClick={() => toggleOpen('theme')}>
+								<Icon name={openKey === 'theme' ? 'chevron-down' : 'chevron-right'} />
 								<span class="cv-card-title">{t('theme.title')}</span>
 							</button>
 						</div>
-						{themeOpen ? <div class="cv-card-body" id={`${active.id}-theme`}><ThemePanel t={t} profile={active} setTheme={setTheme} /></div> : null}
+						{openKey === 'theme' ? <div class="cv-card-body" id={`${active.id}-theme`}><ThemePanel t={t} profile={active} setTheme={setTheme} /></div> : null}
 					</section>
-					<Editor t={t} profile={active} update={update} />
+					<Editor t={t} profile={active} update={update} openKey={openKey} onToggle={toggleOpen} />
 				</aside>
 
 				<main class="cv-main">
