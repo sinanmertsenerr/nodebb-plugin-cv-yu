@@ -152,9 +152,11 @@ const ENTRY_REQUIRED = {
 
 // Bir bölümün bloklarını üretir: başlık (sonrakiyle birlikte kalır) + öğeler
 function sectionBlocks(data, type, lang, titleStyle, template) {
-	if (!sectionHasContent(data, type)) return [];
 	const title = sectionTitle(data, type, lang);
-	const blocks = [{ key: `t:${type}`, keepWithNext: true, render: () => <h2 class={`cv-h2 cv-h2--${titleStyle}`}>{title}</h2> }];
+	const heading = keepWithNext => ({ key: `t:${type}`, keepWithNext, render: () => <h2 class={`cv-h2 cv-h2--${titleStyle} ${keepWithNext ? '' : 'cv-h2--empty'}`}>{title}</h2> });
+	// Gizlenmemiş bölüm boş olsa da başlığıyla görünür (kişi neyi dolduracağını görür); istemezse gözle gizler
+	if (!sectionHasContent(data, type)) return [heading(false)];
+	const blocks = [heading(true)];
 	const D = doc(lang);
 	const items = (data[type] || []);
 	if (TEXT_SECTIONS.includes(type)) {
@@ -179,7 +181,7 @@ function sectionBlocks(data, type, lang, titleStyle, template) {
 		const rows = items.filter(i => hasText(i.name));
 		blocks.push({ key: 'languages', render: () => (
 			<ul class="cv-langs">
-				{rows.map(i => <li key={i.id}><span class="cv-lang-name">{trim(i.name)}</span><span class="cv-lang-level">{D.levels[i.level] || trim(i.level)}</span></li>)}
+				{rows.map(i => <li key={i.id}><span class="cv-lang-name">{trim(i.name)}</span>{i.level ? <span class="cv-lang-level">{D.levels[i.level] || trim(i.level)}</span> : null}</li>)}
 			</ul>
 		) });
 		return blocks;
@@ -215,7 +217,7 @@ function sectionBlocks(data, type, lang, titleStyle, template) {
 			blocks.push({ key, render: () => <Entry head={trim(i.name)} sub={join([i.title, i.company])} right={join([i.email, i.phone], ' · ')} /> });
 		}
 	});
-	return blocks.length > 1 ? blocks : [];
+	return blocks.length > 1 ? blocks : [heading(false)];
 }
 
 function headerBlock(profile, lang, variant) {

@@ -207,6 +207,7 @@ function ItemForm({ t, type, item, idx, count, profile, update, sort }) {
 			<legend class="cv-item-legend">
 				{count > 1 ? <Grip label={t('sort.entry', name)} sortKey={item.id} sort={sort} /> : null}
 				<span class="cv-item-name">{name}</span>
+				{type === 'languages' && item.level ? <span class="cv-level-chip">{t(`level.${item.level}`)}</span> : null}
 				<span class="cv-item-tools">
 					<IconButton label={t('entry.remove')} icon="trash" onClick={remove} danger />
 				</span>

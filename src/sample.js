@@ -49,5 +49,7 @@ export function sampleProfile(name, lang) {
 	const base = newProfile(name, lang);
 	const data = { ...base.data, personal: { ...src.personal }, summary: src.summary, hobbies: src.hobbies };
 	['experience', 'projects', 'education', 'involvement', 'skills', 'certifications', 'languages', 'awards', 'references'].forEach((k) => { data[k] = withIds(src[k]); });
+	// Örnekte dolu bölümler görünür; boş olanlar (ödüller, referanslar) gizli başlar
+	data.sections = base.data.sections.map(s => ({ ...s, visible: !['awards', 'references'].includes(s.type) }));
 	return normalize({ ...base, data }, lang);
 }
