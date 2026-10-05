@@ -485,7 +485,7 @@ function App({ ctx }) {
 
 	const docLang = active.settings.lang;
 	const pageLabels = { page: n => t('page.n', n), continues: n => t('page.continues', n) };
-	// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde önizleme çubuğunda (Yazdır'ın altında), telefonda düzenleme sekmesinin üstünde
+	// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde üst çubukta Yazdır'ın hemen solunda, telefonda düzenleme sekmesinin üstünde
 	const actions = where => (
 		<div class={`cv-actions ${where}`}>
 			<button type="button" class="cvb cvb--secondary cv-action-ai" title={t('actions.aiHint')} onClick={() => openAI(isEmpty(active) ? 'new' : 'improve')}><Icon name="sparkles" /><span>{t('actions.ai')}</span></button>
@@ -549,10 +549,11 @@ function App({ ctx }) {
 					</fieldset>
 				</div>
 				<div class="cv-top-right">
-					<span class={`cv-status ${status.startsWith('error') ? 'is-error' : ''}`} role="status" aria-live="polite">
+					<span class={`cv-status ${status.startsWith('error') ? 'is-error' : ''}`} role="status" aria-live="polite" title={statusText || (state.account.enabled ? t('storage.account') : t('storage.device'))}>
 						<Icon name={state.account.enabled ? 'cloud' : 'device'} />
 						<span>{statusText || (state.account.enabled ? t('storage.account') : t('storage.device'))}</span>
 					</span>
+					{actions('cv-actions--top')}
 					<button type="button" class="cvb cvb--primary" title={t('toolbar.printHint')} onClick={printCV}><Icon name="printer" />{t('toolbar.print')}</button>
 					<div class="cv-menu-wrap">
 						<button type="button" class="cvb-icon" aria-label={t('toolbar.more')} aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(m => !m)}><Icon name="more" /></button>
@@ -611,7 +612,6 @@ function App({ ctx }) {
 							<button type="button" class={`cv-seg-btn ${zoom === 1 ? 'is-on' : ''}`} aria-pressed={zoom === 1} onClick={() => setZoom(1)}><Icon name="zoom-in" />{t('toolbar.zoom100')}</button>
 						</div>
 						<span class={`cv-pagecount ${pageCount > 1 ? 'is-over' : ''}`} role="status">{pageCount > 1 ? <Icon name="info" /> : null}{pageCount > 1 ? t('toolbar.overflow', pageCount) : t('toolbar.pages', pageCount)}</span>
-						{actions('cv-actions--bar')}
 					</div>
 					<PreviewScroller zoom={zoom} pageCount={pageCount}>
 						<PreviewBoundary resetKey={active} message={t('preview.error')}>

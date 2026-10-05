@@ -125,7 +125,7 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     flex: none;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
     padding: 8px 10px;
     border-bottom: 1px solid var(--cvu-line);
 }
@@ -136,7 +136,7 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 6px 18px;
+    gap: 6px 10px;
     min-width: 0;
 }
 
@@ -319,37 +319,49 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     box-shadow: 0 16px 40px -12px rgba(16, 32, 42, .35);
 }
 
-// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde önizleme çubuğunun sağında, telefonda düzenleme sekmesinin üstünde
+// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde üst çubukta Yazdır'ın hemen solunda, telefonda düzenleme sekmesinin üstünde
 .cv-actions {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .cv-actions .cvb {
     justify-content: center;
     min-width: 0;
-    padding-inline: 10px;
+    padding-inline: 8px;
     font-size: 13px;
     white-space: nowrap;
-}
-
-.cv-actions--bar {
-    margin-left: auto;
 }
 
 .cv-actions--side {
     display: none;
 }
 
-// Dar masaüstünde yazılar gizlenir, ikon ve ipucu kalır
-@media screen and (min-width: 992px) and (max-width: 1279.98px) {
-    .cv-actions--bar .cvb span {
+// Üst çubuk kutunun genişliğine göre sıkışır (forumun yan çubukları açık/kapalı fark etmez):
+// önce "Şablon / CV dili" yazıları ve kayıt yeri yazısı gider, en dar hâlde butonlarda yalnız ikon kalır (ipucu durur)
+.cv-app {
+    container-type: inline-size;
+}
+
+@container (max-width: 1499.98px) {
+    .cv-top-label,
+    .cv-status > span {
+        display: none;
+    }
+
+    .cv-status {
+        margin-right: 0;
+    }
+}
+
+@container (max-width: 1239.98px) {
+    .cv-actions--top .cvb span {
         display: none;
     }
 }
 
 @media screen and (max-width: 991.98px) {
-    .cv-actions--bar {
+    .cv-actions--top {
         display: none;
     }
 
