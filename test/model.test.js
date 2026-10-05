@@ -93,3 +93,20 @@ test('sürükle-bırak sıralaması öğeyi doğru yere taşır', async () => {
 	assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 3, 1), ['a', 'd', 'b', 'c']);
 	assert.deepEqual(moveItem(['a', 'b'], 1, 1), ['a', 'b']);
 });
+
+test('örnek CV: tam dolu, doğru dilde, kimlikler benzersiz', async () => {
+	const { sampleProfile } = await import('../src/sample.js');
+	const M = await load();
+	const tr = sampleProfile('Adsız CV', 'tr');
+	assert.equal(tr.name, 'Adsız CV');
+	assert.equal(tr.settings.template, 'sade');
+	assert.equal(tr.data.personal.name, 'Elif Kaya');
+	assert.ok(tr.data.experience.length >= 2 && tr.data.experience.every(e => e.id));
+	assert.deepEqual(M.normalize(tr, 'tr'), tr);
+	const en = sampleProfile('Untitled CV', 'en');
+	assert.equal(en.settings.lang, 'en');
+	assert.match(en.data.summary, /Software Engineering/);
+	const ids = [...tr.data.experience, ...tr.data.projects].map(x => x.id);
+	assert.equal(new Set(ids).size, ids.length);
+	assert.notEqual(tr.data.experience[0].id, sampleProfile('X', 'tr').data.experience[0].id);
+});

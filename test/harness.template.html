@@ -27,6 +27,8 @@
 			if (params.get('icons')) profile.settings.theme.icons = params.get('icons') === '1';
 			if (params.get('photo') === '1') profile.data.personal.photo = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#9aa6b2"/></svg>');
 			var initial = { profiles: { ornek1: profile }, activeId: 'ornek1', account: { enabled: false, consentAt: 0 }, lastBackup: Date.now(), changes: 0 };
+			// #fresh=1: ilk kez gelen kişi gibi aç (cihazdaki kayıt silinir, örnek CV başlar)
+			if (params.get('fresh') === '1') { try { localStorage.removeItem('cv-yu:v1'); } catch (e) { /* yok */ } initial = undefined; }
 			window.YuCV.mount(document.getElementById('cv-yu-root'), { uid: 0, relativePath: '', csrf: '', uiLang: params.get('ui') || 'tr', fonts: '', initial: initial });
 		}());
 	</script>

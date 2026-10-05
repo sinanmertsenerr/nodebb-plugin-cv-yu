@@ -8,8 +8,11 @@ import { Editor, Field } from './ui/Editor.jsx';
 import { ThemePanel } from './ui/ThemePanel.jsx';
 import { Preview, PreviewBoundary } from './ui/Preview.jsx';
 import { Icon } from './ui/icons.jsx';
+import { sampleProfile } from './sample.js';
 
 const MAX_PROFILES = 5;
+const UNTITLED = ['Adsız CV', 'Untitled CV'];
+const isUntitled = name => !String(name || '').trim() || UNTITLED.includes(String(name).trim());
 const BACKUP_AFTER_CHANGES = 25;
 const BACKUP_AFTER_MS = 24 * 60 * 60 * 1000;
 
@@ -86,6 +89,27 @@ function ConsentDialog({ t, onAccept, onClose }) {
 	);
 }
 
+// CV hâlâ "Adsız CV" ise yazdırma, dışa aktarma ve hesaba kaydetmeden önce ad istenir
+function NameDialog({ t, suggestion, onSave, onClose }) {
+	const [name, setName] = useState(suggestion || '');
+	const ok = name.trim() && !UNTITLED.includes(name.trim());
+	return (
+		<Dialog title={t('name.title')} onClose={onClose} t={t}>
+			<form onSubmit={(e) => { e.preventDefault(); if (ok) onSave(name.trim().slice(0, 80)); }}>
+				<p>{t('name.body')}</p>
+				<div class="cvf cvf--wide">
+					<label class="cvf-label" for="cv-name-input">{t('name.label')}</label>
+					<input class="cvf-input" id="cv-name-input" value={name} maxLength={80} placeholder={t('name.placeholder')} autocomplete="off" data-bwignore data-1p-ignore data-lpignore="true" onInput={e => setName(e.currentTarget.value)} />
+				</div>
+				<div class="cv-dialog-actions">
+					<button type="button" class="cvb cvb--ghost" onClick={onClose}>{t('consent.cancel')}</button>
+					<button type="submit" class="cvb cvb--primary" disabled={!ok}>{t('name.save')}</button>
+				</div>
+			</form>
+		</Dialog>
+	);
+}
+
 function ConfirmDialog({ t, title, body, confirmLabel, danger, onConfirm, onClose }) {
 	return (
 		<Dialog title={title} onClose={onClose} t={t}>
@@ -131,7 +155,8 @@ function App({ ctx }) {
 	useEffect(() => {
 		let local = ctx.initial || loadLocal(uiLang);
 		if (!local || !Object.keys(local.profiles).length) {
-			const p = newProfile(t('profiles.untitled'), uiLang);
+			// İlk açılış: boş sayfa yerine örnek CV; kişi üstüne yazarak başlar
+			const p = sampleProfile(t('profiles.untitled'), uiLang);
 			local = { profiles: { [p.id]: p }, activeId: p.id, account: { enabled: false, consentAt: 0 }, lastBackup: Date.now(), changes: 0, ...(local || {}) };
 			if (!Object.keys(local.profiles).length) local.profiles = { [p.id]: p };
 			local.activeId = local.profiles[local.activeId] ? local.activeId : Object.keys(local.profiles)[0];
@@ -223,21 +248,46 @@ function App({ ctx }) {
 		dirty.current.add(p.id);
 		dispatch({ type: 'add', profiles: [p], activate: true });
 	};
-	const removeProfile = () => setDialog({
+	// Tek CV silinemez: kişi hiçbir zaman boş bir şablona düşmez
+	const onlyOne = Object.keys(state.profiles).length <= 1;
+	const removeProfile = () => onlyOne ? notify(t('profiles.deleteLast')) : setDialog({
 		kind: 'confirm', title: t('profiles.delete'), body: t('profiles.deleteConfirm', active.name), confirmLabel: t('profiles.delete'), danger: true,
 		onConfirm: async () => {
 			setDialog(null);
 			const id = active.id;
 			dispatch({ type: 'remove', id });
-			if (Object.keys(state.profiles).length === 1) addProfile();
 			if (state.account.enabled && ctx.uid) { try { await client.remove(id); } catch (err) { notify(t('storage.error', err.message)); } }
 		},
 	});
 
-	const exportJSON = () => {
-		downloadJSON(`${(active.name || 'cv').replace(/[^\w\-]+/g, '_')}.json`, { format: EXPORT_FORMAT, exportedAt: new Date().toISOString(), profiles: [active] });
-		dispatch({ type: 'backup' });
+	// Ad gerektiren işlemler: CV adsızsa önce ad sorulur, sonra işlem verilen adla sürer
+	const withName = action => () => {
+		if (!isUntitled(active.name)) return action(active.name);
+		const person = active.data.personal.name.trim();
+		return setDialog({
+			kind: 'name',
+			suggestion: person ? `${person} – CV` : '',
+			onSave: (name) => {
+				setDialog(null);
+				setProfile({ ...active, name });
+				action(name);
+			},
+		});
 	};
+	// Yazdırırken sayfa başlığı CV'nin adı olur: tarayıcı PDF'i bu adla kaydetmeyi önerir
+	const printCV = withName((name) => {
+		setTimeout(() => {
+			const before = document.title;
+			const restore = () => { document.title = before; window.removeEventListener('afterprint', restore); };
+			document.title = name;
+			window.addEventListener('afterprint', restore);
+			window.print();
+		}, 60);
+	});
+	const exportJSON = withName((name) => {
+		downloadJSON(`${(name || 'cv').replace(/[^\w\-]+/g, '_')}.json`, { format: EXPORT_FORMAT, exportedAt: new Date().toISOString(), profiles: [{ ...active, name }] });
+		dispatch({ type: 'backup' });
+	});
 	const importJSON = async (e) => {
 		const file = e.currentTarget.files && e.currentTarget.files[0];
 		e.currentTarget.value = '';
@@ -254,11 +304,11 @@ function App({ ctx }) {
 		}
 	};
 
-	const enableAccount = () => setDialog({ kind: 'consent', onAccept: () => {
+	const enableAccount = withName(() => setDialog({ kind: 'consent', onAccept: () => {
 		setDialog(null);
 		Object.keys(state.profiles).forEach(id => dirty.current.add(id));
 		dispatch({ type: 'account', enabled: true, consentAt: Date.now() });
-	} });
+	} }));
 	const disableAccount = () => { dispatch({ type: 'account', enabled: false, consentAt: state.account.consentAt }); notify(t('storage.disabledInfo')); };
 	const deleteAccountData = () => setDialog({
 		kind: 'confirm', title: t('storage.delete'), body: t('storage.deleteConfirm'), confirmLabel: t('storage.delete'), danger: true,
@@ -319,7 +369,7 @@ function App({ ctx }) {
 					</div>
 					<button type="button" class="cvb-icon" aria-label={t('profiles.new')} title={t('profiles.new')} onClick={addProfile}><Icon name="plus" /></button>
 					<button type="button" class="cvb-icon" aria-label={t('profiles.copy')} title={t('profiles.copy')} onClick={copyProfile}><Icon name="copy" /></button>
-					<button type="button" class="cvb-icon cvb-icon--danger" aria-label={t('profiles.delete')} title={t('profiles.delete')} onClick={removeProfile}><Icon name="trash" /></button>
+					<button type="button" class={`cvb-icon cvb-icon--danger ${onlyOne ? 'is-disabled' : ''}`} aria-label={t('profiles.delete')} aria-disabled={onlyOne} title={onlyOne ? t('profiles.deleteLast') : t('profiles.delete')} onClick={removeProfile}><Icon name="trash" /></button>
 				</div>
 				<div class="cv-top-mid">
 					<fieldset class="cv-choice cv-choice--inline">
@@ -352,7 +402,7 @@ function App({ ctx }) {
 						<Icon name={state.account.enabled ? 'cloud' : 'device'} />
 						<span>{statusText || (state.account.enabled ? t('storage.account') : t('storage.device'))}</span>
 					</span>
-					<button type="button" class="cvb cvb--primary" onClick={() => window.print()}><Icon name="printer" />{t('toolbar.print')}</button>
+					<button type="button" class="cvb cvb--primary" onClick={printCV}><Icon name="printer" />{t('toolbar.print')}</button>
 					<div class="cv-menu-wrap">
 						<button type="button" class="cvb-icon" aria-label={t('toolbar.more')} aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(m => !m)}><Icon name="more" /></button>
 						{menu ? (
@@ -415,6 +465,7 @@ function App({ ctx }) {
 
 			{toast ? <div class="cv-toast" role="status">{toast}</div> : null}
 			{dialog && dialog.kind === 'consent' ? <ConsentDialog t={t} onAccept={dialog.onAccept} onClose={() => setDialog(null)} /> : null}
+			{dialog && dialog.kind === 'name' ? <NameDialog t={t} suggestion={dialog.suggestion} onSave={dialog.onSave} onClose={() => setDialog(null)} /> : null}
 			{dialog && dialog.kind === 'confirm' ? <ConfirmDialog t={t} title={dialog.title} body={dialog.body} confirmLabel={dialog.confirmLabel} danger={dialog.danger} onConfirm={dialog.onConfirm} onClose={() => setDialog(null)} /> : null}
 			{dialog && dialog.kind === 'privacy' ? (
 				<Dialog title={t('privacy.title')} onClose={() => setDialog(null)} t={t}>

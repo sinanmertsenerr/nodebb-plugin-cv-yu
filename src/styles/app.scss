@@ -279,6 +279,11 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     cursor: pointer;
 }
 
+.cvb-icon.is-disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
 .cvb-icon:hover:not(:disabled) {
     background-color: var(--cvu-hover);
 }
@@ -1373,6 +1378,19 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 
 .cv-header--sade .cv-contact {
     justify-content: center;
+}
+
+// Fotoğraf varsa foto solda, yazılar sola yaslı, altında ince çizgi: daha az yer kaplar, göz soldan başlar
+.cv-header--sade.cv-header--photo {
+    flex-direction: row;
+    gap: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #d3d8dd;
+    text-align: left;
+}
+
+.cv-header--sade.cv-header--photo .cv-contact {
+    justify-content: flex-start;
 }
 
 // Harvard: tek sütun, siyah-beyaz, ortalı ad; kurum kalın, pozisyon italik, yer ve tarih sağda
