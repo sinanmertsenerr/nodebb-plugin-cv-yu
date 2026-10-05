@@ -12,9 +12,6 @@
 	"modules": {
 		"../client/cv.js": "static/lib/page.js"
 	},
-	"staticDirs": {
-		"static": "./static"
-	},
 	"templates": "static/templates",
 	"languages": "languages",
 	"defaultLang": "en-GB"
