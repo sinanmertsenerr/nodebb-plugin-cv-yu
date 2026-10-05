@@ -5,6 +5,19 @@
 define('forum/cv', ['hooks'], function (hooks) {
 	const Page = {};
 	let mounted = false;
+	let clarityPaused = false;
+
+	// Forumda Microsoft Clarity varsa CV sayfasında kayıt durur, çıkınca devam eder.
+	// İçeriği asıl koruyan şablondaki data-clarity-mask; pause/resume belgelenmemiş komutlar, en iyi çaba.
+	function clarity(command) {
+		try {
+			if (typeof window.clarity === 'function') {
+				window.clarity(command);
+				return true;
+			}
+		} catch (err) { /* Clarity yoksa ya da komutu tanımıyorsa önemli değil */ }
+		return false;
+	}
 
 	function loadOnce(tag, attrs, key) {
 		return new Promise(function (resolve, reject) {
@@ -31,6 +44,7 @@ define('forum/cv', ['hooks'], function (hooks) {
 		if (!root) {
 			return;
 		}
+		clarityPaused = clarity('pause');
 		try {
 			await Promise.all([
 				loadOnce('link', { rel: 'stylesheet', href: root.dataset.css }, 'css'),
@@ -53,6 +67,10 @@ define('forum/cv', ['hooks'], function (hooks) {
 		if (mounted && window.YuCV) {
 			window.YuCV.unmount();
 			mounted = false;
+		}
+		if (clarityPaused) {
+			clarity('resume');
+			clarityPaused = false;
 		}
 	});
 

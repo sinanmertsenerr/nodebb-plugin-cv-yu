@@ -7,7 +7,8 @@ A privacy-first résumé editor that lives inside a NodeBB 4 forum at `/cv`. Bui
 - **Four templates:** Clean (default), Harvard (black and white, serif, organisation in bold and role in italics), Sidebar (two columns; the side column comes after the main one in the PDF text so ATS read the name first) and Compact. Colours, three self-hosted typefaces (Inter, Source Sans 3, Source Serif 4 — all OFL), text size, line spacing, margins, heading style, contact icons and photo shape are adjustable.
 - **Twelve sections** with drag-to-reorder (mouse, touch and keyboard), hiding and custom headings; entries reorder the same way. Bullet points grow as you type, Enter splits a bullet, Backspace at the start joins it to the previous one and pasting several lines makes one bullet per line. A photo is shrunk in the browser before it is stored.
 - **Device-first storage.** Everything stays in the browser's local storage. Nothing reaches the server unless the person chooses *Store in my account* and gives explicit consent (the consent text names the server's country, as KVKK art. 9 requires). *Delete my data* wipes the server copy immediately; deleting the forum account deletes it too.
-- **No analytics, no third-party requests.** Fonts come from the forum's own server.
+- **No analytics, no third-party requests.** Fonts come from the forum's own server. The workspace carries `data-clarity-mask`, and the page pauses Microsoft Clarity while it is open, so a forum-wide session recorder never sees CV content.
+- **Light.** About 40 KB of script and 7 KB of CSS (gzip), preloaded from the page itself. Fonts are subset at build time (weights 400–700, Latin plus Turkish and other European letters): a Turkish CV in Inter downloads about 45 KB of font instead of 133 KB. Saving to the account waits for a 4-second pause, sends the photo only when it changed (it lives in its own hash, so a save never reads or rewrites it), and flushes pending changes when the tab is hidden or the page is left.
 - **Starts from a sample CV.** A first visit opens a filled example named "Untitled CV"; printing, exporting or storing asks for a real name first, and the last CV can't be deleted.
 - **Fill or improve with AI, no API key.** The *AI* button builds a prompt (rules plus the exact JSON format, generated from the data model) for the person to paste into ChatGPT, Claude or Gemini; pasting the answer back creates the CV. "Improve" sends the current CV without its photo and opens the result as a new CV. Nothing goes through the forum's server.
 - **Import and export.** *Import* takes this plugin's JSON, the NextCV export, a bare AI answer, or an old CV as PDF/TXT. PDFs are read in the browser with pdf.js (loaded only when needed) and their text goes to the AI step. *Export* downloads JSON.
@@ -32,7 +33,7 @@ All routes require a logged-in user and act on that user's own data.
 | Method | Route | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/v3/plugins/cv-yu/profiles` | List the account's CVs and the consent timestamp |
-| `PUT` | `/api/v3/plugins/cv-yu/profiles/:id` | Save a CV (`{ profile, consent: true }`); at most 5 CVs, 400 KB each |
+| `PUT` | `/api/v3/plugins/cv-yu/profiles/:id` | Save a CV (`{ profile, consent: true }`); at most 5 CVs, 180 KB of text each. Include `data.personal.photo` only to change the photo (`''` removes it, at most 220 KB); without it the stored photo stays |
 | `DELETE` | `/api/v3/plugins/cv-yu/profiles/:id` | Delete one CV |
 | `DELETE` | `/api/v3/plugins/cv-yu/profiles` | Delete all CV data and the consent record |
 

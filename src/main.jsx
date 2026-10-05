@@ -248,6 +248,7 @@ function App({ ctx }) {
 	const [status, setStatus] = useState('');
 	const [toast, setToast] = useState('');
 	const dirty = useRef(new Set());
+	const sentPhoto = useRef({});
 	const client = useMemo(() => api(ctx), [ctx]);
 	const fileRef = useRef(null);
 
@@ -279,9 +280,16 @@ function App({ ctx }) {
 			client.list().then((res) => {
 				if (!res) return;
 				if (local.account.enabled || res.consentAt) {
-					const profiles = merge(local.profiles, res.profiles || [], uiLang);
-					const serverIds = new Set((res.profiles || []).map(p => p.id));
-					Object.values(local.profiles).forEach((p) => { if (!serverIds.has(p.id)) dirty.current.add(p.id); });
+					const remote = res.profiles || [];
+					const profiles = merge(local.profiles, remote, uiLang);
+					const server = new Map(remote.map(p => [p.id, p]));
+					// Sunucudaki fotoğraflar biliniyor: değişmedikçe bir daha gönderilmez
+					remote.forEach((p) => { sentPhoto.current[p.id] = (p.data && p.data.personal && p.data.personal.photo) || ''; });
+					// Sunucuda olmayan ya da cihazda daha yeni olan CV'ler gönderilecekler listesine girer
+					Object.values(local.profiles).forEach((p) => {
+						const s = server.get(p.id);
+						if (!s || (p.updatedAt || 0) > (s.updatedAt || 0)) dirty.current.add(p.id);
+					});
 					dispatch({ type: 'merge', profiles });
 					dispatch({ type: 'account', enabled: true, consentAt: res.consentAt || local.account.consentAt });
 				}
@@ -296,26 +304,63 @@ function App({ ctx }) {
 		return () => clearTimeout(timer);
 	}, [state]);
 
-	// Hesaba kayıt: yalnızca onay verildiyse, değişen profiller
-	useEffect(() => {
-		if (!state.loaded || !state.account.enabled || !ctx.uid) return;
-		if (!dirty.current.size) return;
-		const timer = setTimeout(async () => {
-			const ids = [...dirty.current];
-			dirty.current.clear();
-			setStatus('saving');
+	// Hesaba kayıt: yalnızca onay verildiyse, değişen profiller. Yazarken 4 sn durunca bir kez gider;
+	// fotoğraf yalnızca değiştiyse eklenir. Sekme gizlenince ya da sayfadan çıkınca bekleyen değişiklikler hemen gider.
+	const stateRef = useRef(state);
+	stateRef.current = state;
+	const inflight = useRef(null);
+	const flush = useCallback((opts = {}) => {
+		const s = stateRef.current;
+		if (!s.loaded || !s.account.enabled || !ctx.uid || !dirty.current.size) return inflight.current;
+		if (inflight.current) {
+			// Gönderim sürerken gelen değişiklikler o bitince gider
+			inflight.current.then(() => flushRef.current(opts));
+			return inflight.current;
+		}
+		const ids = [...dirty.current];
+		dirty.current.clear();
+		setStatus('saving');
+		inflight.current = (async () => {
 			try {
 				for (const id of ids) {
-					if (state.profiles[id]) await client.save(state.profiles[id]);
+					const p = stateRef.current.profiles[id];
+					if (!p) continue;
+					const photo = p.data.personal.photo || '';
+					const photoChanged = sentPhoto.current[id] !== photo;
+					await client.save(p, { photo: photoChanged, keepalive: opts.keepalive });
+					sentPhoto.current[id] = photo;
 				}
 				setStatus('saved');
 			} catch (err) {
 				ids.forEach(id => dirty.current.add(id));
 				setStatus(`error:${err.message}`);
+			} finally {
+				inflight.current = null;
 			}
-		}, 1500);
+		})();
+		return inflight.current;
+	}, [client]);
+	const flushRef = useRef(flush);
+	flushRef.current = flush;
+
+	useEffect(() => {
+		if (!state.loaded || !state.account.enabled || !ctx.uid || !dirty.current.size) return undefined;
+		const timer = setTimeout(() => flushRef.current(), 4000);
 		return () => clearTimeout(timer);
 	}, [state.profiles, state.account.enabled]);
+
+	useEffect(() => {
+		const onHide = () => { if (document.visibilityState === 'hidden') flushRef.current({ keepalive: true }); };
+		const onLeave = () => flushRef.current({ keepalive: true });
+		document.addEventListener('visibilitychange', onHide);
+		window.addEventListener('pagehide', onLeave);
+		return () => {
+			document.removeEventListener('visibilitychange', onHide);
+			window.removeEventListener('pagehide', onLeave);
+			// Forum içinde başka sayfaya geçerken (bileşen kalkarken) bekleyenleri gönder
+			flushRef.current({ keepalive: true });
+		};
+	}, []);
 
 	const active = state.activeId ? state.profiles[state.activeId] : null;
 
@@ -459,6 +504,7 @@ function App({ ctx }) {
 			setDialog(null);
 			try {
 				await client.purge();
+				sentPhoto.current = {};
 				dispatch({ type: 'account', enabled: false, consentAt: 0 });
 				setStatus('');
 				notify(t('storage.deleted'));

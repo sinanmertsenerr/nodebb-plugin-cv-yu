@@ -100,7 +100,8 @@ export function Preview({ profile, zoom, onLayout, docLang, emptyHint, pageLabel
 		if (!document.fonts || !document.fonts.load) return undefined;
 		let alive = true;
 		const family = (FONT_STACK[theme.font] || FONT_STACK.inter).split(',')[0];
-		const faces = ['400', '500', '600', '700', 'italic 400'].map(w => document.fonts.load(`${w} 13px ${family}`).catch(() => null));
+		// İtalik burada istenmez: Sade gibi italiksiz CV'de gereksiz dosya inmesin (Harvard'da gerekirse loadingdone yeniden ölçtürür)
+		const faces = ['400', '500', '600', '700'].map(w => document.fonts.load(`${w} 13px ${family}`).catch(() => null));
 		Promise.all(faces).then(() => { if (alive) setFontsTick(t => t + 1); });
 		const onDone = () => { if (alive) setFontsTick(t => t + 1); };
 		document.fonts.addEventListener('loadingdone', onDone);

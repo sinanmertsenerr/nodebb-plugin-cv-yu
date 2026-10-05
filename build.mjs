@@ -4,6 +4,7 @@ import { readFile, writeFile, mkdir, readdir, rm, copyFile } from 'node:fs/promi
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import * as esbuild from 'esbuild';
+import subsetFont from 'subset-font';
 import * as sass from 'sass';
 
 const watch = process.argv.includes('--watch');
@@ -11,7 +12,26 @@ const dist = 'static/dist';
 const fontsDir = 'static/fonts';
 const hash = s => createHash('sha256').update(s).digest('hex').slice(0, 10);
 
-// Kendi sunucumuzdan sunulan yazı tipleri (OFL): latin + latin-ext, normal + italik
+// Kendi sunucumuzdan sunulan yazı tipleri (OFL): latin + latin-ext, normal + italik.
+// Küçültülür: ağırlık ekseni CV'nin kullandığı 400–700'e indirilir; latin-ext yalnızca Türkçe ve Avrupa adlarının
+// harfleriyle para birimlerini tutar. Aralıklar SCSS'e de buradan yazılır.
+const FONT_RANGES = {
+	latin: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD',
+	// Latin Genişletilmiş-A (Türkçe ğ/İ/ş/ı dahil Avrupa harfleri), Azerice Ə/ə, Romence ș/ț, para birimleri (₺, €…).
+	// Bunların dışındaki nadir bir harf olursa yalnız o harf sistem yazı tipiyle görünür.
+	'latin-ext': 'U+0100-017F, U+018F, U+0192, U+0218-021B, U+0259, U+20A0-20C0',
+};
+const FONT_WEIGHTS = { min: 400, max: 700 };
+
+function rangeText(ranges) {
+	let out = '';
+	ranges.split(',').map(r => r.trim().replace(/^U\+/i, '')).forEach((r) => {
+		const [a, b] = r.split('-').map(x => parseInt(x, 16));
+		for (let c = a; c <= (b || a); c += 1) out += String.fromCodePoint(c);
+	});
+	return out;
+}
+
 const FONTS = [
 	['inter', '@fontsource-variable/inter'],
 	['source-sans-3', '@fontsource-variable/source-sans-3'],
@@ -24,7 +44,12 @@ async function copyFonts() {
 		const dir = path.join('node_modules', pkg, 'files');
 		const files = (await readdir(dir)).filter(f => /^(.+)-(latin|latin-ext)-wght-(normal|italic)\.woff2$/.test(f));
 		for (const f of files) {
-			await copyFile(path.join(dir, f), path.join(fontsDir, f));
+			const subset = /-latin-ext-/.test(f) ? 'latin-ext' : 'latin';
+			const out = await subsetFont(await readFile(path.join(dir, f)), rangeText(FONT_RANGES[subset]), {
+				targetFormat: 'woff2',
+				variationAxes: { wght: { ...FONT_WEIGHTS, default: FONT_WEIGHTS.min } },
+			});
+			await writeFile(path.join(fontsDir, f), out);
 		}
 		await copyFile(path.join('node_modules', pkg, 'LICENSE'), path.join(fontsDir, `LICENSE-${name}.txt`));
 	}
@@ -83,6 +108,8 @@ async function buildOnce() {
 	console.log(`${jsName} ${(jsText.length / 1024).toFixed(0)} KB, ${cssName} ${(css.length / 1024).toFixed(0)} KB`);
 }
 
+// SCSS'teki unicode-range ve ağırlık aralığı yazı tipleriyle aynı kalsın diye buradan üretilir
+await writeFile('src/styles/_font-ranges.scss', `// build.mjs üretir, elle değiştirme\n$latin: "${FONT_RANGES.latin}";\n$latin-ext: "${FONT_RANGES['latin-ext']}";\n$font-weights: ${FONT_WEIGHTS.min} ${FONT_WEIGHTS.max};\n`);
 await copyFonts();
 await copyPdfjs();
 await buildOnce();

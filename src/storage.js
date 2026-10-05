@@ -50,12 +50,15 @@ export function clearLocal() {
 // Hesap API'si: NodeBB yazma API'si, CSRF başlığıyla
 export function api(ctx) {
 	const base = `${ctx.relativePath}/api/v3/plugins/cv-yu`;
-	async function call(method, path, body) {
+	async function call(method, path, body, opts = {}) {
+		const text = body ? JSON.stringify(body) : undefined;
 		const res = await fetch(base + path, {
 			method,
 			credentials: 'same-origin',
 			headers: { 'content-type': 'application/json', 'x-csrf-token': ctx.csrf, accept: 'application/json' },
-			body: body ? JSON.stringify(body) : undefined,
+			body: text,
+			// Sekme kapanırken de gitsin; tarayıcılar keepalive gövdesini ~64 KB ile sınırlar
+			keepalive: !!opts.keepalive && (!text || text.length < 60000),
 		});
 		let json = null;
 		try {
@@ -69,7 +72,16 @@ export function api(ctx) {
 	}
 	return {
 		list: () => call('GET', '/profiles'),
-		save: profile => call('PUT', `/profiles/${encodeURIComponent(profile.id)}`, { profile, consent: true }),
+		// Fotoğraf yalnızca değiştiğinde gönderilir; gönderilmezse sunucudaki fotoğraf olduğu gibi kalır
+		save: (profile, { photo = true, keepalive = false } = {}) => {
+			let body = profile;
+			if (!photo) {
+				const personal = { ...profile.data.personal };
+				delete personal.photo;
+				body = { ...profile, data: { ...profile.data, personal } };
+			}
+			return call('PUT', `/profiles/${encodeURIComponent(profile.id)}`, { profile: body, consent: true }, { keepalive });
+		},
 		remove: id => call('DELETE', `/profiles/${encodeURIComponent(id)}`),
 		purge: () => call('DELETE', '/profiles'),
 	};

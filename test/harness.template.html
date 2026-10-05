@@ -27,9 +27,25 @@
 			if (params.get('icons')) profile.settings.theme.icons = params.get('icons') === '1';
 			if (params.get('photo') === '1') profile.data.personal.photo = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#9aa6b2"/></svg>');
 			var initial = { profiles: { ornek1: profile }, activeId: 'ornek1', account: { enabled: false, consentAt: 0 }, lastBackup: Date.now(), changes: 0 };
+			// #fakeapi=1: giriş yapmış biri gibi (uid 1) aç, hesap API'sini taklit et; istekler window.__api'ye yazılır
+			var uid = 0;
+			if (params.get('fakeapi') === '1') {
+				uid = 1;
+				window.__api = [];
+				var realFetch = window.fetch.bind(window);
+				window.fetch = function (url, opts) {
+					if (String(url).indexOf('/api/v3/plugins/cv-yu') === -1) return realFetch(url, opts);
+					opts = opts || {};
+					var body = opts.body ? JSON.parse(opts.body) : null;
+					var personal = body && body.profile && body.profile.data && body.profile.data.personal;
+					window.__api.push({ method: opts.method || 'GET', url: String(url), bytes: opts.body ? opts.body.length : 0, photo: personal ? (Object.prototype.hasOwnProperty.call(personal, 'photo') ? (personal.photo ? 'var' : 'boş') : 'yok') : '-', keepalive: !!opts.keepalive, t: Math.round(performance.now()) });
+					var response = (opts.method || 'GET') === 'GET' ? { consentAt: 0, profiles: [] } : { id: 'x', updatedAt: Date.now() };
+					return Promise.resolve(new Response(JSON.stringify({ status: { code: 'ok' }, response: response }), { status: 200, headers: { 'content-type': 'application/json' } }));
+				};
+			}
 			// #fresh=1: ilk kez gelen kişi gibi aç (cihazdaki kayıt silinir, örnek CV başlar)
 			if (params.get('fresh') === '1') { try { localStorage.removeItem('cv-yu:v1'); } catch (e) { /* yok */ } initial = undefined; }
-			window.YuCV.mount(document.getElementById('cv-yu-root'), { uid: 0, relativePath: '', csrf: '', uiLang: params.get('ui') || 'tr', fonts: '', initial: initial });
+			window.YuCV.mount(document.getElementById('cv-yu-root'), { uid: uid, relativePath: '', csrf: '', uiLang: params.get('ui') || 'tr', fonts: '', initial: initial });
 		}());
 	</script>
 </body>

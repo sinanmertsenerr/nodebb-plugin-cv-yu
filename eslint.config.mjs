@@ -7,6 +7,6 @@ export default [
 	...publicConfig,
 	...serverConfig,
 	{
-		ignores: ['node_modules/**', 'static/dist/**', 'src/**'],
+		ignores: ['node_modules/**', 'static/dist/**', 'static/pdf-*/**', 'src/**'],
 	},
 ];
