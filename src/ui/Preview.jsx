@@ -53,7 +53,13 @@ function Columns({ built, geo, pageCols }) {
 	);
 }
 
-export function Preview({ profile, zoom, onLayout, docLang }) {
+function isEmpty(profile) {
+	const d = profile.data;
+	return !Object.values(d.personal).some(v => v && String(v).trim()) && !d.summary.trim() && !d.hobbies.trim() &&
+		!['experience', 'projects', 'education', 'involvement', 'skills', 'certifications', 'languages', 'awards', 'references'].some(k => (d[k] || []).length);
+}
+
+export function Preview({ profile, zoom, onLayout, docLang, emptyHint }) {
 	const built = useMemo(() => buildTemplate(profile), [profile]);
 	const theme = profile.settings.theme;
 	const geo = useMemo(() => geometry(theme, built.columns), [theme.margins, built]);
@@ -92,6 +98,7 @@ export function Preview({ profile, zoom, onLayout, docLang }) {
 				<section class={`cv-page cv-page--${built.template}`} key={i} aria-label={`${i + 1}`} style={{ padding: `${geo.margin}px` }}>
 					{sideW ? <div class="cv-side-bg" style={{ width: `${sideW}px` }} aria-hidden="true" /> : null}
 					<Columns built={built} geo={geo} pageCols={pageCols} />
+					{i === 0 && emptyHint && isEmpty(profile) ? <div class="cv-empty"><strong>{emptyHint[0]}</strong>{emptyHint[1]}</div> : null}
 				</section>
 			))}
 		</div>

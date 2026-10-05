@@ -60,6 +60,9 @@ async function buildOnce() {
 	await writeFile(path.join(dist, jsName), jsText);
 	await writeFile(path.join(dist, cssName), css);
 	await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify({ js: jsName, css: cssName }, null, '\t')}\n`);
+	// Yazdırma ve sayfalama testi: NodeBB olmadan açılan sayfa (headless Chrome ile PDF'e basılır)
+	const harness = (await readFile('test/harness.template.html', 'utf8')).replace('{{css}}', cssName).replace('{{js}}', jsName);
+	await writeFile(path.join(dist, 'harness.html'), harness);
 	console.log(`${jsName} ${(jsText.length / 1024).toFixed(0)} KB, ${cssName} ${(css.length / 1024).toFixed(0)} KB`);
 }
 

@@ -107,6 +107,7 @@ function App({ ctx }) {
 	const [tab, setTab] = useState('edit');
 	const [themeOpen, setThemeOpen] = useState(false);
 	const [menu, setMenu] = useState(false);
+	const [renaming, setRenaming] = useState(false);
 	const [dialog, setDialog] = useState(null);
 	const [status, setStatus] = useState('');
 	const [toast, setToast] = useState('');
@@ -118,7 +119,7 @@ function App({ ctx }) {
 
 	// İlk yükleme: cihazdaki kayıt; girişliyse ve daha önce onay verilmişse hesaptaki profillerle birleştir
 	useEffect(() => {
-		let local = loadLocal(uiLang);
+		let local = ctx.initial || loadLocal(uiLang);
 		if (!local || !Object.keys(local.profiles).length) {
 			const p = newProfile(t('profiles.untitled'), uiLang);
 			local = { profiles: { [p.id]: p }, activeId: p.id, account: { enabled: false, consentAt: 0 }, lastBackup: Date.now(), changes: 0, ...(local || {}) };
@@ -244,6 +245,12 @@ function App({ ctx }) {
 		document.addEventListener('click', close);
 		return () => document.removeEventListener('click', close);
 	}, [menu]);
+	useEffect(() => {
+		if (!renaming) return;
+		const close = (e) => { if (!e.target.closest('.cv-rename') && !e.target.closest('[aria-label="' + t('profiles.rename') + '"]')) setRenaming(false); };
+		document.addEventListener('click', close);
+		return () => document.removeEventListener('click', close);
+	}, [renaming]);
 
 	if (!state.loaded || !active) return <div class="cv-yu-loading" role="status">…</div>;
 
@@ -261,9 +268,47 @@ function App({ ctx }) {
 							{Object.values(state.profiles).map(p => <option value={p.id} key={p.id}>{p.name}</option>)}
 						</select>
 					</label>
+					<div class="cv-menu-wrap">
+						<button type="button" class="cvb-icon" aria-label={t('profiles.rename')} title={t('profiles.rename')} aria-expanded={renaming} onClick={() => setRenaming(r => !r)}><Icon name="pencil" /></button>
+						{renaming ? (
+							<form class="cv-menu cv-rename" onSubmit={(e) => { e.preventDefault(); setRenaming(false); }}>
+								<label class="cvf-label" for={`${active.id}-rename`}>{t('profiles.renamePrompt')}</label>
+								<div class="cv-rename-row">
+									<input class="cvf-input" id={`${active.id}-rename`} value={active.name} maxLength={80} autoFocus onInput={e => setProfile({ ...active, name: e.currentTarget.value })} onKeyDown={e => { if (e.key === 'Escape') setRenaming(false); }} />
+									<button type="submit" class="cvb cvb--primary cvb--sm">{t('close')}</button>
+								</div>
+							</form>
+						) : null}
+					</div>
 					<button type="button" class="cvb-icon" aria-label={t('profiles.new')} title={t('profiles.new')} onClick={addProfile}><Icon name="plus" /></button>
 					<button type="button" class="cvb-icon" aria-label={t('profiles.copy')} title={t('profiles.copy')} onClick={copyProfile}><Icon name="copy" /></button>
 					<button type="button" class="cvb-icon cvb-icon--danger" aria-label={t('profiles.delete')} title={t('profiles.delete')} onClick={removeProfile}><Icon name="trash" /></button>
+				</div>
+				<div class="cv-top-mid">
+					<fieldset class="cv-choice cv-choice--inline">
+						<legend class="cv-visually-hidden">{t('template.label')}</legend>
+						<span class="cv-top-label" aria-hidden="true">{t('template.label')}</span>
+						<div class="cv-seg" role="group">
+							{TEMPLATES.map(k => (
+								<label class={`cv-seg-item ${active.settings.template === k ? 'is-on' : ''}`} key={k}>
+									<input type="radio" name={`${active.id}-template`} value={k} checked={active.settings.template === k} onChange={() => setSettings({ template: k })} />
+									<span>{t(`template.${k}`)}</span>
+								</label>
+							))}
+						</div>
+					</fieldset>
+					<fieldset class="cv-choice cv-choice--inline" title={t('docLang.help')}>
+						<legend class="cv-visually-hidden">{t('docLang.label')}</legend>
+						<span class="cv-top-label" aria-hidden="true">{t('docLang.label')}</span>
+						<div class="cv-seg" role="group">
+							{[['tr', 'TR'], ['en', 'EN']].map(([k, label]) => (
+								<label class={`cv-seg-item ${docLang === k ? 'is-on' : ''}`} key={k}>
+									<input type="radio" name={`${active.id}-lang`} value={k} checked={docLang === k} onChange={() => setSettings({ lang: k })} />
+									<span>{label}</span>
+								</label>
+							))}
+						</div>
+					</fieldset>
 				</div>
 				<div class="cv-top-right">
 					<span class={`cv-status ${status.startsWith('error') ? 'is-error' : ''}`} role="status" aria-live="polite">
@@ -302,22 +347,6 @@ function App({ ctx }) {
 			<div class="cv-body">
 				<aside class="cv-side">
 					{needsBackup ? <div class="cv-banner"><Icon name="download" /><span>{t('storage.backupHint')}</span><button type="button" class="cvb cvb--sm cvb--secondary" onClick={exportJSON}>{t('toolbar.export')}</button></div> : null}
-					<div class="cv-fields cv-fields--top">
-						<Field id={`${active.id}-name`} label={t('profiles.renamePrompt')} value={active.name} onInput={v => setProfile({ ...active, name: v })} wide />
-						<div class="cvf">
-							<label class="cvf-label" for={`${active.id}-template`}>{t('template.label')}</label>
-							<select class="cvf-input" id={`${active.id}-template`} value={active.settings.template} onChange={e => setSettings({ template: e.currentTarget.value })}>
-								{TEMPLATES.map(k => <option value={k} key={k}>{t(`template.${k}`)}</option>)}
-							</select>
-						</div>
-						<div class="cvf">
-							<label class="cvf-label" for={`${active.id}-lang`}>{t('docLang.label')}</label>
-							<select class="cvf-input" id={`${active.id}-lang`} value={docLang} onChange={e => setSettings({ lang: e.currentTarget.value })}>
-								<option value="tr">Türkçe</option>
-								<option value="en">English</option>
-							</select>
-						</div>
-					</div>
 					<section class="cv-card">
 						<div class="cv-card-head">
 							<button type="button" class="cv-card-toggle" aria-expanded={themeOpen} aria-controls={`${active.id}-theme`} onClick={() => setThemeOpen(o => !o)}>
@@ -340,7 +369,7 @@ function App({ ctx }) {
 						<span class="cv-print-hint">{t('toolbar.printHint')}</span>
 					</div>
 					<PreviewScroller zoom={zoom} pageCount={pageCount}>
-						<Preview profile={active} zoom={zoom} onLayout={setPageCount} docLang={docLang} />
+						<Preview profile={active} zoom={zoom} onLayout={setPageCount} docLang={docLang} emptyHint={[t('empty.title'), t('empty.body')]} />
 					</PreviewScroller>
 				</main>
 			</div>

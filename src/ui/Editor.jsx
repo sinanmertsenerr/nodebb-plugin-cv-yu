@@ -24,7 +24,7 @@ export function Field({ id, label, value, onInput, placeholder, type, wide, auto
 	return (
 		<div class={`cvf ${wide ? 'cvf--wide' : ''}`}>
 			<label class="cvf-label" for={id}>{label}</label>
-			<input class="cvf-input" id={id} type={type || 'text'} value={value || ''} placeholder={placeholder || ''} autocomplete={autocomplete || 'off'} inputmode={inputmode} onInput={e => onInput(e.currentTarget.value)} />
+			<input class="cvf-input" id={id} type={type || 'text'} value={value || ''} placeholder={placeholder || ''} autocomplete={autocomplete || 'off'} inputmode={inputmode} data-bwignore data-1p-ignore data-lpignore="true" onInput={e => onInput(e.currentTarget.value)} />
 			{hint ? <p class="cvf-hint">{hint}</p> : null}
 		</div>
 	);
@@ -193,6 +193,7 @@ function SectionCard({ t, profile, update, section, index, count, open, onToggle
 	const { type } = section;
 	const lang = profile.settings.lang;
 	const filled = sectionHasContent(profile.data, type);
+	const items = TEXT_SECTIONS.includes(type) ? (filled ? 1 : 0) : (profile.data[type] || []).length;
 	const setSection = patch => update(d => ({ ...d, sections: d.sections.map(s => (s.type === type ? { ...s, ...patch } : s)) }));
 	const move = (dir) => update((d) => {
 		const list = d.sections.slice();
@@ -208,7 +209,7 @@ function SectionCard({ t, profile, update, section, index, count, open, onToggle
 				<button type="button" class="cv-card-toggle" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
 					<Icon name={open ? 'chevron-down' : 'chevron-right'} />
 					<span class="cv-card-title">{t(`section.${type}`)}</span>
-					{filled ? <span class="cv-dot" aria-hidden="true" /> : null}
+					{items ? <span class="cv-count" aria-label={t('entry.n', items)}>{items}</span> : null}
 				</button>
 				<span class="cv-card-tools">
 					<IconButton label={t('section.up')} icon="up" onClick={() => move(-1)} disabled={index === 0} />
