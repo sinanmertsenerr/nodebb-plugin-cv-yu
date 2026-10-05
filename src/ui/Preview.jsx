@@ -1,6 +1,6 @@
 // Önizleme: blokları gizli bir ölçüm sayfasında ölçer, gerçek A4 sayfalara dağıtır ve çizer.
 // Yazdırma aynı sayfaları kullanır; ekranda görünen sayfa sayısı PDF'tekiyle aynıdır.
-import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { buildTemplate } from '../templates/index.jsx';
 import { A4, MARGINS, layoutColumns } from '../paginate.js';
 
@@ -64,8 +64,19 @@ export function Preview({ profile, zoom, onLayout, docLang, emptyHint }) {
 	const theme = profile.settings.theme;
 	const geo = useMemo(() => geometry(theme, built.columns), [theme.margins, built]);
 	const [pages, setPages] = useState(null);
+	const [fontsTick, setFontsTick] = useState(0);
 	const measureRef = useRef(null);
 	const style = themeStyle(theme);
+
+	// Yazı tipleri sonradan gelirse blok yükseklikleri değişir: yeniden ölç
+	useEffect(() => {
+		if (!document.fonts) return undefined;
+		let alive = true;
+		document.fonts.ready.then(() => { if (alive) setFontsTick(t => t + 1); });
+		const onDone = () => setFontsTick(t => t + 1);
+		document.fonts.addEventListener('loadingdone', onDone);
+		return () => { alive = false; document.fonts.removeEventListener('loadingdone', onDone); };
+	}, []);
 
 	// Ölçüm: gizli sayfadaki blokların yüksekliği (alt boşluk dâhil) → sayfalara dağıt
 	useLayoutEffect(() => {
@@ -82,7 +93,7 @@ export function Preview({ profile, zoom, onLayout, docLang, emptyHint }) {
 		const next = layoutColumns(cols, geo.contentH);
 		setPages(next);
 		if (onLayout) onLayout(next.length);
-	}, [built, geo, theme.font, theme.size, theme.spacing, theme.titleStyle, theme.icons, theme.photoShape, theme.photoSize]);
+	}, [built, geo, fontsTick, theme.font, theme.size, theme.spacing, theme.titleStyle, theme.icons, theme.photoShape, theme.photoSize]);
 
 	const scale = zoom === 'fit' ? null : zoom;
 	const sideW = built.columns.length > 1 ? geo.margin + geo.widths[built.columns[0].key] + (COL_GAP / 2) : 0;

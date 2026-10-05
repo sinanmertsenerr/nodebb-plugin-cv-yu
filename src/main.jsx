@@ -393,7 +393,10 @@ function PreviewScroller({ zoom, pageCount, children }) {
 	useEffect(() => {
 		const el = ref.current;
 		if (!el) return;
-		const calc = () => setScale(zoom === 'fit' ? Math.min(1, (el.clientWidth - 32) / 794) : zoom);
+		const calc = () => {
+			if (el.clientWidth < 100) return; // gizliyken ölçme
+			setScale(zoom === 'fit' ? Math.min(1, (el.clientWidth - 32) / 794) : zoom);
+		};
 		calc();
 		const ro = new ResizeObserver(calc);
 		ro.observe(el);
