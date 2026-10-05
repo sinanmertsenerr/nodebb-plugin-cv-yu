@@ -485,12 +485,13 @@ function App({ ctx }) {
 
 	const docLang = active.settings.lang;
 	const pageLabels = { page: n => t('page.n', n), continues: n => t('page.continues', n) };
-	// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde üst çubukta Yazdır'ın hemen solunda, telefonda düzenleme sekmesinin üstünde
+	// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde üst çubukta Yazdır'ın hemen solunda, telefonda düzenleme sekmesinin üstünde.
+	// İçe aktar: ok aşağı, içeri; dışa aktar: ok yukarı, dışarı.
 	const actions = where => (
 		<div class={`cv-actions ${where}`}>
 			<button type="button" class="cvb cvb--secondary cv-action-ai" title={t('actions.aiHint')} onClick={() => openAI(isEmpty(active) ? 'new' : 'improve')}><Icon name="sparkles" /><span>{t('actions.ai')}</span></button>
-			<button type="button" class="cvb cvb--secondary" title={t('actions.importHint')} onClick={() => fileRef.current.click()}><Icon name="upload" /><span>{t('actions.import')}</span></button>
-			<button type="button" class="cvb cvb--secondary" title={t('actions.exportHint')} onClick={exportJSON}><Icon name="download" /><span>{t('actions.export')}</span></button>
+			<button type="button" class="cvb cvb--secondary" title={t('actions.importHint')} onClick={() => fileRef.current.click()}><Icon name="download" /><span>{t('actions.import')}</span></button>
+			<button type="button" class="cvb cvb--secondary" title={t('actions.exportHint')} onClick={exportJSON}><Icon name="upload" /><span>{t('actions.export')}</span></button>
 		</div>
 	);
 	const needsBackup = !state.account.enabled && state.changes >= BACKUP_AFTER_CHANGES && Date.now() - state.lastBackup > BACKUP_AFTER_MS;
