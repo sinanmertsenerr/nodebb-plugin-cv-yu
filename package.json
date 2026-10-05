@@ -1,0 +1,53 @@
+{
+  "name": "nodebb-plugin-cv-yu",
+  "version": "0.1.0",
+  "description": "CV builder for NodeBB: a privacy-first résumé editor with real A4 pagination, print-ready PDF output and optional account storage",
+  "main": "library.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sinanmertsenerr/nodebb-plugin-cv-yu.git"
+  },
+  "homepage": "https://github.com/sinanmertsenerr/nodebb-plugin-cv-yu#readme",
+  "bugs": {
+    "url": "https://github.com/sinanmertsenerr/nodebb-plugin-cv-yu/issues"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "lint": "eslint .",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "nodebb",
+    "plugin",
+    "cv",
+    "resume",
+    "özgeçmiş",
+    "harmony"
+  ],
+  "author": "Sinan Mert Sener",
+  "license": "MIT",
+  "files": [
+    "library.js",
+    "plugin.json",
+    "lib/",
+    "static/",
+    "languages/",
+    "README.md",
+    "LICENSE"
+  ],
+  "nbbpm": {
+    "compatibility": "^4.15.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/source-sans-3": "^5.2.8",
+    "@fontsource-variable/source-serif-4": "^5.2.8",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.0.0",
+    "eslint-config-nodebb": "^2.0.2",
+    "preact": "^10.27.0",
+    "sass": "1.104.1"
+  }
+}

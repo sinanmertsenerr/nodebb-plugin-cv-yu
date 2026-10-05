@@ -1,0 +1,19 @@
+{
+	"title": "CV Builder",
+	"loading": "Loading the CV builder…",
+	"needs-js": "The CV builder needs JavaScript enabled in your browser.",
+
+	"error.consent-required": "You need to give consent before saving to your account.",
+	"error.bad-id": "Invalid profile id.",
+	"error.id-mismatch": "The profile id doesn't match the address.",
+	"error.not-object": "The profile must be a JSON object.",
+	"error.bad-name": "The profile name can't be empty and may have at most %1 characters.",
+	"error.too-deep": "Data nested too deeply: %1",
+	"error.too-long": "Text too long (%1), at most %2 characters.",
+	"error.too-many": "Too many items (%1), at most %2.",
+	"error.bad-key": "Invalid field name: %1",
+	"error.bad-photo": "The photo must be a JPEG, PNG or WebP image.",
+	"error.photo-too-big": "The photo is too large, at most %1 KB.",
+	"error.profile-too-big": "The profile is too large, at most %1 KB.",
+	"error.too-many-profiles": "At most %1 CVs can be kept in the account."
+}

@@ -1,0 +1,19 @@
+{
+	"title": "CV Oluşturucu",
+	"loading": "CV oluşturucu yükleniyor…",
+	"needs-js": "CV oluşturucu için tarayıcıda JavaScript açık olmalı.",
+
+	"error.consent-required": "Hesapta saklamak için önce onay vermen gerekiyor.",
+	"error.bad-id": "Profil kimliği geçersiz.",
+	"error.id-mismatch": "Profil kimliği adresle uyuşmuyor.",
+	"error.not-object": "Profil bir JSON nesnesi olmalı.",
+	"error.bad-name": "Profil adı boş olamaz, en fazla %1 karakter olabilir.",
+	"error.too-deep": "Veri çok iç içe: %1",
+	"error.too-long": "Yazı çok uzun (%1), en fazla %2 karakter.",
+	"error.too-many": "Çok fazla öğe (%1), en fazla %2.",
+	"error.bad-key": "Geçersiz alan adı: %1",
+	"error.bad-photo": "Fotoğraf JPEG, PNG ya da WebP olmalı.",
+	"error.photo-too-big": "Fotoğraf çok büyük, en fazla %1 KB.",
+	"error.profile-too-big": "Profil çok büyük, en fazla %1 KB.",
+	"error.too-many-profiles": "Hesapta en fazla %1 CV saklanabilir."
+}
