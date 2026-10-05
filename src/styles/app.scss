@@ -105,6 +105,11 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 
 // Masaüstünde kutu forum başlığının alt çizgisine dayanır: o çizgi kutunun üst kenarı olur
 @media screen and (min-width: 992px) {
+    // Sayfa içeriğindeki boşluğu (boş widget alanı + gap) ve başlıkla içerik arasındaki boşluğu kapat
+    #content:has(> .cv-yu-page) {
+        row-gap: 0 !important; // Bootstrap .gap-3 !important kullanır
+    }
+
     .cv-yu-page {
         margin-top: -1rem;
     }
