@@ -30,6 +30,23 @@ async function copyFonts() {
 	}
 }
 
+// PDF'ten metin almak için pdf.js (Apache-2.0). Yalnızca kişi PDF yüklediğinde, kendi tarayıcısında açılır;
+// klasör adı sürümü taşır, sürüm değişince 60 günlük önbellek sorun olmaz. .js uzantısı: her sunucu doğru türle sunar.
+const pdfjsVersion = JSON.parse(await readFile('node_modules/pdfjs-dist/package.json', 'utf8')).version;
+const pdfDir = `pdf-${pdfjsVersion}`;
+
+async function copyPdfjs() {
+	for (const f of await readdir('static')) {
+		if (/^pdf-[\d.]+$/.test(f) && f !== pdfDir) await rm(path.join('static', f), { recursive: true });
+	}
+	const out = path.join('static', pdfDir);
+	await mkdir(out, { recursive: true });
+	const src = 'node_modules/pdfjs-dist/legacy/build';
+	await copyFile(path.join(src, 'pdf.min.mjs'), path.join(out, 'pdf.min.js'));
+	await copyFile(path.join(src, 'pdf.worker.min.mjs'), path.join(out, 'pdf.worker.min.js'));
+	await copyFile('node_modules/pdfjs-dist/LICENSE', path.join(out, 'LICENSE.txt'));
+}
+
 async function buildOnce() {
 	await mkdir(dist, { recursive: true });
 	for (const f of await readdir(dist)) {
@@ -49,7 +66,7 @@ async function buildOnce() {
 		jsxImportSource: 'preact',
 		write: false,
 		legalComments: 'none',
-		define: { 'process.env.NODE_ENV': '"production"' },
+		define: { 'process.env.NODE_ENV': '"production"', PDFJS_DIR: JSON.stringify(pdfDir) },
 	});
 	const jsText = js.outputFiles[0].text;
 
@@ -67,6 +84,7 @@ async function buildOnce() {
 }
 
 await copyFonts();
+await copyPdfjs();
 await buildOnce();
 
 if (watch) {

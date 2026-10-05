@@ -80,7 +80,7 @@ export class PreviewBoundary extends Component {
 	}
 }
 
-function isEmpty(profile) {
+export function isEmpty(profile) {
 	const d = profile.data;
 	return !Object.values(d.personal).some(v => v && String(v).trim()) && !d.summary.trim() && !d.hobbies.trim() &&
 		!['experience', 'projects', 'education', 'involvement', 'skills', 'certifications', 'languages', 'awards', 'references'].some(k => (d[k] || []).length);

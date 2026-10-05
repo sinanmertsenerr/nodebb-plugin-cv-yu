@@ -319,6 +319,177 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     box-shadow: 0 16px 40px -12px rgba(16, 32, 42, .35);
 }
 
+// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde önizleme çubuğunun sağında, telefonda düzenleme sekmesinin üstünde
+.cv-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.cv-actions .cvb {
+    justify-content: center;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.cv-actions--bar {
+    margin-left: auto;
+}
+
+.cv-actions--side {
+    display: none;
+}
+
+// Dar masaüstünde yazılar gizlenir, ikon ve ipucu kalır
+@media screen and (min-width: 992px) and (max-width: 1279.98px) {
+    .cv-actions--bar .cvb span {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 991.98px) {
+    .cv-actions--bar {
+        display: none;
+    }
+
+    .cv-actions--side {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin: 6px 0 10px;
+    }
+}
+
+.cv-action-ai svg {
+    color: var(--cvu-accent);
+}
+
+// Boş CV çağrısı
+.cv-callout {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(var(--cvu-accent-rgb), .25);
+    border-radius: 10px;
+    background-color: rgba(var(--cvu-accent-rgb), .06);
+}
+
+.cv-callout p {
+    margin: 0 0 8px;
+    color: var(--cvu-ink2);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.cv-callout strong {
+    color: var(--cvu-ink);
+}
+
+.cv-callout-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cv-ai-mode {
+    display: flex;
+    margin: 0 0 16px;
+}
+
+.cv-ai-mode .cv-seg-btn {
+    flex: 1;
+    justify-content: center;
+}
+
+.cv-menu--left {
+    right: auto;
+    left: 0;
+    min-width: 220px;
+}
+
+// Yapay zekâ penceresi: numaralı üç adım
+.cv-ai-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 0 14px;
+    padding: 0;
+    list-style: none;
+    counter-reset: aistep;
+}
+
+.cv-ai-steps > li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 34px;
+    counter-increment: aistep;
+}
+
+.cv-ai-steps > li::before {
+    content: counter(aistep);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: rgba(var(--cvu-accent-rgb), .14);
+    color: var(--cvu-accent);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.cv-ai-steps p {
+    margin: 0;
+}
+
+.cv-ai-head,
+.cv-ai-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+}
+
+.cv-ai-row {
+    justify-content: flex-start;
+}
+
+.cv-ai-text {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.cv-ai-error {
+    margin: 0;
+    color: var(--cvu-danger);
+    font-size: 13px;
+}
+
+.cv-ai-privacy {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0 0 4px;
+}
+
+.cv-ai-privacy svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-top: 1px;
+}
+
+.cv-seg--mini .cv-seg-btn {
+    min-height: 28px;
+    padding: 2px 10px;
+    font-size: 12.5px;
+}
+
 [data-theme="dark"] .cv-menu {
     background-color: #2a2b2e;
 }
@@ -420,8 +591,7 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 
 // Dar masaüstünde yazı etiketleri gizlenir, seçenekler tek satırda kalır
 @media screen and (max-width: 1279.98px) {
-    .cv-top-label,
-    .cv-print-hint {
+    .cv-top-label {
         display: none;
     }
 }
@@ -437,12 +607,6 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 .cv-pagecount svg {
     width: 14px;
     height: 14px;
-}
-
-.cv-print-hint {
-    margin-left: auto;
-    color: var(--cvu-muted);
-    font-size: 12.5px;
 }
 
 .cv-preview {
@@ -1616,8 +1780,7 @@ select.cvf-input {
         display: none;
     }
 
-    .cv-top-right .cvb--primary span,
-    .cv-print-hint {
+    .cv-top-right .cvb--primary span {
         display: none;
     }
 

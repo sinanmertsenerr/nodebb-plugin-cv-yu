@@ -8,7 +8,9 @@ A privacy-first résumé editor that lives inside a NodeBB 4 forum at `/cv`. Bui
 - **Twelve sections** with drag-to-reorder (mouse, touch and keyboard), hiding and custom headings; entries reorder the same way. Bullet points grow as you type, Enter splits a bullet, Backspace at the start joins it to the previous one and pasting several lines makes one bullet per line. A photo is shrunk in the browser before it is stored.
 - **Device-first storage.** Everything stays in the browser's local storage. Nothing reaches the server unless the person chooses *Store in my account* and gives explicit consent (the consent text names the server's country, as KVKK art. 9 requires). *Delete my data* wipes the server copy immediately; deleting the forum account deletes it too.
 - **No analytics, no third-party requests.** Fonts come from the forum's own server.
-- **JSON export and import.** Reads this plugin's format and the export format of the IEU Forum CV tool.
+- **Starts from a sample CV.** A first visit opens a filled example named "Untitled CV"; printing, exporting or storing asks for a real name first, and the last CV can't be deleted.
+- **Fill or improve with AI, no API key.** The *AI* button builds a prompt (rules plus the exact JSON format, generated from the data model) for the person to paste into ChatGPT, Claude or Gemini; pasting the answer back creates the CV. "Improve" sends the current CV without its photo and opens the result as a new CV. Nothing goes through the forum's server.
+- **Import and export.** *Import* takes this plugin's JSON, the NextCV export, a bare AI answer, or an old CV as PDF/TXT. PDFs are read in the browser with pdf.js (loaded only when needed) and their text goes to the AI step. *Export* downloads JSON.
 - **Turkish and English UI.** The CV language is separate: it sets headings, date formatting and the `lang` attribute (so uppercase headings get İ/ı right).
 
 Requires NodeBB 4.15 or later.
@@ -47,4 +49,4 @@ The source lives in `src/` (Preact, bundled with esbuild; styles in Sass). Commi
 
 ## License
 
-MIT. Fonts under the SIL Open Font License (see `static/fonts/LICENSE-*.txt`). Icons from [Lucide](https://lucide.dev) (ISC).
+MIT. Fonts under the SIL Open Font License (see `static/fonts/LICENSE-*.txt`). Icons from [Lucide](https://lucide.dev) (ISC). [pdf.js](https://mozilla.github.io/pdf.js/) under Apache-2.0 (`static/pdf-*/LICENSE.txt`).

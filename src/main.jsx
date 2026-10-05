@@ -2,13 +2,15 @@
 import { render } from 'preact';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { makeT, uiLangOf } from './i18n.js';
-import { EXPORT_FORMAT, TEMPLATES, newProfile, normalize, parseImport, switchTemplate } from './model.js';
+import { EXPORT_FORMAT, TEMPLATES, newProfile, normalize, switchTemplate } from './model.js';
 import { api, clearLocal, downloadJSON, loadLocal, merge, saveLocal } from './storage.js';
 import { Editor, Field } from './ui/Editor.jsx';
 import { ThemePanel } from './ui/ThemePanel.jsx';
-import { Preview, PreviewBoundary } from './ui/Preview.jsx';
+import { Preview, PreviewBoundary, isEmpty } from './ui/Preview.jsx';
 import { Icon } from './ui/icons.jsx';
 import { sampleProfile } from './sample.js';
+import { buildPrompt, profileFromAI, readImport } from './ai.js';
+import { isReadable, textFromFile } from './filetext.js';
 
 const MAX_PROFILES = 5;
 const UNTITLED = ['Adsız CV', 'Untitled CV'];
@@ -51,7 +53,8 @@ function reducer(state, action) {
 function Dialog({ title, children, onClose, t }) {
 	const ref = useRef(null);
 	useEffect(() => {
-		const first = ref.current && ref.current.querySelector('button, input, [tabindex]');
+		// Önce yazılacak alan (ad, metin), yoksa ilk düğme odaklanır
+		const first = ref.current && (ref.current.querySelector('.cv-dialog-body :is(input:not([type=checkbox]), textarea)') || ref.current.querySelector('button, input, [tabindex]'));
 		if (first) first.focus();
 		const onKey = (e) => { if (e.key === 'Escape') onClose(); };
 		document.addEventListener('keydown', onKey);
@@ -106,6 +109,116 @@ function NameDialog({ t, suggestion, onSave, onClose }) {
 					<button type="submit" class="cvb cvb--primary" disabled={!ok}>{t('name.save')}</button>
 				</div>
 			</form>
+		</Dialog>
+	);
+}
+
+// Yapay zekâ ile doldurma: komutu kopyala → kendi seçtiğin yapay zekâya yapıştır → cevabı geri yapıştır.
+// Hiçbir şey sunucumuza ya da bir API'ye gitmez; metni yapay zekâya kişi kendisi gönderir.
+function AIDialog({ t, initialMode, initialFile, profile, defaultLang, onCreate, onClose }) {
+	const blank = isEmpty(profile);
+	const [mode, setMode] = useState(blank ? 'new' : (initialMode || 'new'));
+	const [lang, setLang] = useState(defaultLang);
+	const [text, setText] = useState('');
+	const [answer, setAnswer] = useState('');
+	const [copied, setCopied] = useState(false);
+	const [error, setError] = useState('');
+	const [reading, setReading] = useState('');
+	const canCopy = mode === 'improve' || text.trim().length >= 20;
+	const onFile = async (e) => {
+		const file = e.currentTarget.files && e.currentTarget.files[0];
+		e.currentTarget.value = '';
+		if (!file) return;
+		if (!isReadable(file)) { setReading(t('ai.fileType')); return; }
+		setReading(t('ai.fileReading'));
+		try {
+			const got = await textFromFile(file);
+			if (got.length < 40) { setReading(t('ai.fileEmpty')); return; }
+			setText(got.slice(0, 20000));
+			setCopied(false);
+			setReading(t('ai.fileOk', file.name));
+		} catch (err) {
+			console.warn('[cv-yu] file', err);
+			setReading(err.message === 'size' ? t('ai.fileSize') : t('ai.fileError'));
+		}
+	};
+	// "İçe aktar"dan gelen PDF/TXT: pencere açılınca okunur ve 1. adıma yazılır
+	useEffect(() => {
+		if (initialFile) onFile({ currentTarget: { files: [initialFile], value: '' } });
+	}, []);
+	const copy = async () => {
+		const value = buildPrompt({ mode, lang, text, profile });
+		try {
+			await navigator.clipboard.writeText(value);
+		} catch (err) {
+			// Pano izni yoksa eski yol
+			const ta = document.createElement('textarea');
+			ta.value = value;
+			ta.setAttribute('readonly', '');
+			ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+			document.body.appendChild(ta);
+			ta.select();
+			try { document.execCommand('copy'); } finally { ta.remove(); }
+		}
+		setCopied(true);
+	};
+	const create = () => {
+		try {
+			onCreate(answer, mode === 'improve' ? profile.settings.lang : lang, mode);
+		} catch (err) {
+			setError(err.message === 'limit' ? t('profiles.limit', MAX_PROFILES) : t('ai.error'));
+		}
+	};
+	return (
+		<Dialog title={t('ai.title')} onClose={onClose} t={t}>
+			{blank ? null : (
+				<div class="cv-seg cv-ai-mode" role="group" aria-label={t('ai.title')}>
+					{['new', 'improve'].map(k => (
+						<button type="button" key={k} class={`cv-seg-btn ${mode === k ? 'is-on' : ''}`} aria-pressed={mode === k} onClick={() => { setMode(k); setCopied(false); setError(''); }}>{t(k === 'new' ? 'ai.modeNew' : 'ai.modeImprove')}</button>
+					))}
+				</div>
+			)}
+			<ol class="cv-ai-steps">
+				<li>
+					{mode === 'improve' ? <p>{t('ai.step1improve')}</p> : (
+						<>
+							<div class="cv-ai-head">
+								<label class="cvf-label" for="cv-ai-text">{t('ai.step1')}</label>
+								<div class="cv-seg cv-seg--mini" role="group" aria-label={t('ai.lang')} title={t('ai.lang')}>
+									{[['tr', 'TR'], ['en', 'EN']].map(([k, label]) => (
+										<button type="button" key={k} class={`cv-seg-btn ${lang === k ? 'is-on' : ''}`} aria-pressed={lang === k} onClick={() => { setLang(k); setCopied(false); }}>{label}</button>
+									))}
+								</div>
+							</div>
+							<textarea class="cvf-input cv-ai-text" id="cv-ai-text" rows={6} value={text} placeholder={t('ai.step1ph')} onInput={(e) => { setText(e.currentTarget.value); setCopied(false); }} />
+							<div class="cv-ai-row">
+								<label class="cvb cvb--secondary cvb--sm">
+									<input type="file" accept=".pdf,.txt,application/pdf,text/plain" class="cv-visually-hidden" onChange={onFile} />
+									<Icon name="upload" />{t('ai.file')}
+								</label>
+								<span class="cvf-hint" role="status">{reading || t('ai.fileHint')}</span>
+							</div>
+						</>
+					)}
+				</li>
+				<li>
+					<span class="cvf-label">{t('ai.step2')}</span>
+					<div class="cv-ai-row">
+						<button type="button" class={`cvb ${copied ? 'cvb--secondary' : 'cvb--primary'}`} disabled={!canCopy} onClick={copy}><Icon name={copied ? 'check' : 'copy'} />{copied ? t('ai.copied') : t('ai.copy')}</button>
+						<span class="cvf-hint">{t('ai.step2hint')}</span>
+					</div>
+				</li>
+				<li>
+					<label class="cvf-label" for="cv-ai-answer">{t('ai.step3')}</label>
+					<textarea class="cvf-input cv-ai-text" id="cv-ai-answer" rows={5} value={answer} placeholder={t('ai.step3ph')} onInput={(e) => { setAnswer(e.currentTarget.value); setError(''); }} />
+					{error ? <p class="cv-ai-error" role="alert">{error}</p> : null}
+				</li>
+			</ol>
+			<p class="cvf-hint cv-ai-privacy"><Icon name="shield" />{t('ai.privacy')}</p>
+			<div class="cv-dialog-actions">
+				<button type="button" class="cvb cvb--ghost" onClick={onClose}>{t('consent.cancel')}</button>
+				<button type="button" class="cvb cvb--primary" disabled={!answer.trim()} onClick={create}><Icon name="sparkles" />{t('ai.create')}</button>
+			</div>
 		</Dialog>
 	);
 }
@@ -242,6 +355,36 @@ function App({ ctx }) {
 		dirty.current.add(p.id);
 		dispatch({ type: 'add', profiles: [p], activate: true });
 	};
+	const hasRoom = () => Object.keys(state.profiles).length < MAX_PROFILES;
+	const openAI = mode => setDialog({ kind: 'ai', mode });
+	// Yapay zekâ cevabından yeni CV: iyileştirme de yeni CV açar, mevcut CV'ye dokunmaz. Okunamazsa hata fırlatır (pencere gösterir).
+	const createFromAI = (mode, text, lang) => {
+		const improve = mode === 'improve';
+		const p = profileFromAI(text, improve ? { lang, base: active, name: `${active.name} – YZ`.slice(0, 80) } : { lang });
+		const person = p.data.personal.name.trim();
+		if (!improve) p.name = person ? `${person} – CV`.slice(0, 80) : t('profiles.untitled');
+		if (!improve && isEmpty(active)) {
+			// Boş CV'den başlatıldıysa yeni CV açmak yerine onu doldur (ayarlar ve kimlik kalır)
+			setProfile({ ...active, name: isUntitled(active.name) ? p.name : active.name, settings: { ...active.settings, lang: p.settings.lang }, data: p.data });
+		} else {
+			if (!hasRoom()) throw new Error('limit');
+			dirty.current.add(p.id);
+			dispatch({ type: 'add', profiles: [p], activate: true });
+		}
+		setDialog(null);
+		notify(t('ai.done'));
+	};
+	const fillSample = () => setProfile({ ...active, data: sampleProfile(active.name, active.settings.lang).data });
+	// İçe aktar: JSON doğrudan CV olur; PDF/TXT yapay zekâ ekranına metin olarak gider
+	const onImportFile = (e) => {
+		const file = e.currentTarget.files && e.currentTarget.files[0];
+		if (file && isReadable(file)) {
+			e.currentTarget.value = '';
+			setDialog({ kind: 'ai', mode: 'new', file });
+			return undefined;
+		}
+		return importJSON(e);
+	};
 	const copyProfile = () => {
 		if (Object.keys(state.profiles).length >= MAX_PROFILES) return notify(t('profiles.limit', MAX_PROFILES));
 		const p = normalize({ ...active, id: undefined, name: `${active.name} (2)` }, uiLang);
@@ -294,7 +437,7 @@ function App({ ctx }) {
 		if (!file) return;
 		try {
 			const room = MAX_PROFILES - Object.keys(state.profiles).length;
-			const imported = parseImport(await file.text(), uiLang).map(p => normalize({ ...p, id: state.profiles[p.id] ? undefined : p.id }, uiLang)).slice(0, Math.max(0, room));
+			const imported = readImport(await file.text(), uiLang).map(p => normalize({ ...p, id: state.profiles[p.id] ? undefined : p.id }, uiLang)).slice(0, Math.max(0, room));
 			if (!imported.length) return notify(t('profiles.limit', MAX_PROFILES));
 			imported.forEach(p => dirty.current.add(p.id));
 			dispatch({ type: 'add', profiles: imported, activate: true });
@@ -342,6 +485,14 @@ function App({ ctx }) {
 
 	const docLang = active.settings.lang;
 	const pageLabels = { page: n => t('page.n', n), continues: n => t('page.continues', n) };
+	// Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde önizleme çubuğunda (Yazdır'ın altında), telefonda düzenleme sekmesinin üstünde
+	const actions = where => (
+		<div class={`cv-actions ${where}`}>
+			<button type="button" class="cvb cvb--secondary cv-action-ai" title={t('actions.aiHint')} onClick={() => openAI(isEmpty(active) ? 'new' : 'improve')}><Icon name="sparkles" /><span>{t('actions.ai')}</span></button>
+			<button type="button" class="cvb cvb--secondary" title={t('actions.importHint')} onClick={() => fileRef.current.click()}><Icon name="upload" /><span>{t('actions.import')}</span></button>
+			<button type="button" class="cvb cvb--secondary" title={t('actions.exportHint')} onClick={exportJSON}><Icon name="download" /><span>{t('actions.export')}</span></button>
+		</div>
+	);
 	const needsBackup = !state.account.enabled && state.changes >= BACKUP_AFTER_CHANGES && Date.now() - state.lastBackup > BACKUP_AFTER_MS;
 	const statusText = status === 'saving' ? t('storage.saving') : status === 'saved' ? t('storage.saved') : status.startsWith('error:') ? t('storage.error', status.slice(6)) : '';
 
@@ -402,14 +553,11 @@ function App({ ctx }) {
 						<Icon name={state.account.enabled ? 'cloud' : 'device'} />
 						<span>{statusText || (state.account.enabled ? t('storage.account') : t('storage.device'))}</span>
 					</span>
-					<button type="button" class="cvb cvb--primary" onClick={printCV}><Icon name="printer" />{t('toolbar.print')}</button>
+					<button type="button" class="cvb cvb--primary" title={t('toolbar.printHint')} onClick={printCV}><Icon name="printer" />{t('toolbar.print')}</button>
 					<div class="cv-menu-wrap">
 						<button type="button" class="cvb-icon" aria-label={t('toolbar.more')} aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(m => !m)}><Icon name="more" /></button>
 						{menu ? (
 							<div class="cv-menu" role="menu">
-								<button type="button" role="menuitem" onClick={() => { setMenu(false); exportJSON(); }}><Icon name="download" />{t('toolbar.export')}</button>
-								<button type="button" role="menuitem" onClick={() => { setMenu(false); fileRef.current.click(); }}><Icon name="upload" />{t('toolbar.import')}</button>
-								<div class="cv-menu-sep" role="separator" />
 								<div class="cv-menu-title">{t('storage.title')}</div>
 								{ctx.uid > 0 ? (
 									state.account.enabled ?
@@ -422,7 +570,7 @@ function App({ ctx }) {
 							</div>
 						) : null}
 					</div>
-					<input type="file" accept="application/json,.json" class="cv-visually-hidden" ref={fileRef} onChange={importJSON} tabIndex={-1} aria-hidden="true" />
+					<input type="file" accept=".json,.pdf,.txt,application/json,application/pdf,text/plain" class="cv-visually-hidden" ref={fileRef} onChange={onImportFile} tabIndex={-1} aria-hidden="true" />
 				</div>
 			</div>
 
@@ -433,6 +581,16 @@ function App({ ctx }) {
 
 			<div class="cv-body">
 				<aside class="cv-side" data-sort-scroll ref={sideRef}>
+					{actions('cv-actions--side')}
+					{isEmpty(active) ? (
+						<div class="cv-callout">
+							<p><strong>{t('empty.calloutTitle')}</strong>{t('empty.calloutBody')}</p>
+							<div class="cv-callout-actions">
+								<button type="button" class="cvb cvb--primary cvb--sm" onClick={fillSample}><Icon name="file" />{t('empty.fillSample')}</button>
+								<button type="button" class="cvb cvb--secondary cvb--sm" onClick={() => openAI('new')}><Icon name="sparkles" />{t('empty.fillAI')}</button>
+							</div>
+						</div>
+					) : null}
 					{needsBackup ? <div class="cv-banner"><Icon name="download" /><span>{t('storage.backupHint')}</span><button type="button" class="cvb cvb--sm cvb--secondary" onClick={exportJSON}>{t('toolbar.export')}</button></div> : null}
 					<section class="cv-card" data-acc="theme">
 						<div class="cv-card-head">
@@ -453,7 +611,7 @@ function App({ ctx }) {
 							<button type="button" class={`cv-seg-btn ${zoom === 1 ? 'is-on' : ''}`} aria-pressed={zoom === 1} onClick={() => setZoom(1)}><Icon name="zoom-in" />{t('toolbar.zoom100')}</button>
 						</div>
 						<span class={`cv-pagecount ${pageCount > 1 ? 'is-over' : ''}`} role="status">{pageCount > 1 ? <Icon name="info" /> : null}{pageCount > 1 ? t('toolbar.overflow', pageCount) : t('toolbar.pages', pageCount)}</span>
-						<span class="cv-print-hint">{t('toolbar.printHint')}</span>
+						{actions('cv-actions--bar')}
 					</div>
 					<PreviewScroller zoom={zoom} pageCount={pageCount}>
 						<PreviewBoundary resetKey={active} message={t('preview.error')}>
@@ -465,6 +623,7 @@ function App({ ctx }) {
 
 			{toast ? <div class="cv-toast" role="status">{toast}</div> : null}
 			{dialog && dialog.kind === 'consent' ? <ConsentDialog t={t} onAccept={dialog.onAccept} onClose={() => setDialog(null)} /> : null}
+			{dialog && dialog.kind === 'ai' ? <AIDialog t={t} initialMode={dialog.mode} initialFile={dialog.file} profile={active} defaultLang={active.settings.lang} onCreate={(text, lang, mode) => createFromAI(mode, text, lang)} onClose={() => setDialog(null)} /> : null}
 			{dialog && dialog.kind === 'name' ? <NameDialog t={t} suggestion={dialog.suggestion} onSave={dialog.onSave} onClose={() => setDialog(null)} /> : null}
 			{dialog && dialog.kind === 'confirm' ? <ConfirmDialog t={t} title={dialog.title} body={dialog.body} confirmLabel={dialog.confirmLabel} danger={dialog.danger} onConfirm={dialog.onConfirm} onClose={() => setDialog(null)} /> : null}
 			{dialog && dialog.kind === 'privacy' ? (
