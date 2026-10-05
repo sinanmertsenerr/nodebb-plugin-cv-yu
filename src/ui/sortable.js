@@ -79,7 +79,9 @@ export function useSortable(onMove) {
 			if (!found || found.items.length < 2) return;
 			e.preventDefault();
 			const { item, list, items, index } = found;
-			const scroller = list.closest('[data-sort-scroll]') || document.scrollingElement;
+			// Masaüstünde panel kendi içinde kayar; telefonda panel uzar ve sayfa kayar
+			const panel = list.closest('[data-sort-scroll]');
+			const scroller = panel && getComputedStyle(panel).overflowY !== 'visible' && panel.scrollHeight > panel.clientHeight ? panel : document.scrollingElement;
 			const s0 = scroller.scrollTop;
 			const tops = items.map(n => n.getBoundingClientRect().top + s0);
 			const heights = items.map(n => n.offsetHeight);
