@@ -1,4 +1,4 @@
 node_modules/
 package-lock.json
 .DS_Store
-static/dist/harness.html
+static/dist/harness*
