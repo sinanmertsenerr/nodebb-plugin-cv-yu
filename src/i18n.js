@@ -15,6 +15,7 @@ const UI = {
 		'profiles.copy': 'Kopyasını oluştur',
 		'profiles.limit': 'En fazla %1 CV tutabilirsin.',
 		'template.label': 'Şablon',
+		'template.harvard': 'Harvard',
 		'template.sade': 'Sade',
 		'template.yan': 'Yan sütun',
 		'template.sikisik': 'Sıkışık',
@@ -44,7 +45,10 @@ const UI = {
 		'theme.rounded': 'Köşeli',
 		'theme.square': 'Kare',
 		'sections.title': 'Bölümler',
-		'sections.help': 'Boş bölümler CV\'de görünmez. Okla sırayı değiştir, gözle gizle.',
+		'sections.help': 'Sıralamak için soldaki noktalardan tutup sürükle, gizlemek için göze bas. Boş bölümler CV\'de görünmez.',
+		'sort.section': '%1 bölümünü taşı (sürükle ya da ↑ ↓)',
+		'sort.entry': 'Taşı: %1 (sürükle ya da ↑ ↓)',
+		'preview.error': 'Önizleme çizilemedi. Bir değişiklik yapınca yeniden denenir.',
 		'section.personal': 'Kişisel bilgiler',
 		'section.summary': 'Özet',
 		'section.experience': 'Deneyim',
@@ -59,8 +63,6 @@ const UI = {
 		'section.references': 'Referanslar',
 		'section.show': 'Bölümü göster',
 		'section.hide': 'Bölümü gizle',
-		'section.up': 'Yukarı taşı',
-		'section.down': 'Aşağı taşı',
 		'section.open': 'Bölümü aç',
 		'section.close': 'Bölümü kapat',
 		'section.titleLabel': 'CV\'deki başlık',
@@ -68,14 +70,12 @@ const UI = {
 		'section.empty': 'Henüz öğe yok.',
 		'entry.add': 'Ekle',
 		'entry.remove': 'Öğeyi sil',
-		'entry.up': 'Yukarı taşı',
-		'entry.down': 'Aşağı taşı',
 		'entry.n': '%1. öğe',
 		'bullets.label': 'Maddeler',
 		'bullets.add': 'Madde ekle',
 		'bullets.remove': 'Maddeyi sil',
 		'bullets.placeholder': 'Ne yaptın, sonucu ne oldu? Sayı ver.',
-		'bullets.hint': 'Her madde bir eylemle başlasın; ölçülebilir sonuç yaz.',
+		'bullets.hint': 'Enter yeni madde açar. Her madde bir eylemle başlasın, sonucu sayıyla yaz.',
 		'current': 'Devam ediyor',
 		'field.name': 'Ad Soyad',
 		'field.title': 'Unvan',
@@ -93,7 +93,8 @@ const UI = {
 		'field.license': 'Ehliyet',
 		'field.license.ph': 'ör. B',
 		'field.birthDate': 'Doğum tarihi',
-		'field.birthDate.ph': 'ör. 2003',
+		'field.birthDate.ph': 'ör. 14.05.2003',
+		'field.birthDate.enHint': 'İngilizce CV\'lerde doğum tarihi ve fotoğraf genelde yazılmaz.',
 		'field.photo': 'Fotoğraf',
 		'field.photo.upload': 'Fotoğraf seç',
 		'field.photo.remove': 'Fotoğrafı kaldır',
@@ -139,6 +140,9 @@ const UI = {
 		'toolbar.fit': 'Sığdır',
 		'toolbar.zoom100': '%100',
 		'toolbar.pages': '%1 sayfa',
+		'toolbar.overflow': '%1 sayfaya taştı',
+		'page.n': '%1. sayfa',
+		'page.continues': '%1. sayfada devam ediyor ↓',
 		'toolbar.print': 'Yazdır / PDF',
 		'toolbar.printHint': 'Açılan pencerede "PDF olarak kaydet"i seç. Kenar boşluğu "Yok" olsun.',
 		'toolbar.export': 'JSON indir',
@@ -194,6 +198,7 @@ const UI = {
 		'profiles.copy': 'Duplicate',
 		'profiles.limit': 'You can keep at most %1 CVs.',
 		'template.label': 'Template',
+		'template.harvard': 'Harvard',
 		'template.sade': 'Clean',
 		'template.yan': 'Sidebar',
 		'template.sikisik': 'Compact',
@@ -223,7 +228,10 @@ const UI = {
 		'theme.rounded': 'Rounded',
 		'theme.square': 'Square',
 		'sections.title': 'Sections',
-		'sections.help': 'Empty sections don\'t show on the CV. Reorder with the arrows, hide with the eye.',
+		'sections.help': 'Drag the dots on the left to reorder; press the eye to hide. Empty sections don\'t show on the CV.',
+		'sort.section': 'Move the %1 section (drag or ↑ ↓)',
+		'sort.entry': 'Move: %1 (drag or ↑ ↓)',
+		'preview.error': 'The preview could not be drawn. It will retry after your next change.',
 		'section.personal': 'Personal details',
 		'section.summary': 'Summary',
 		'section.experience': 'Experience',
@@ -238,8 +246,6 @@ const UI = {
 		'section.references': 'References',
 		'section.show': 'Show section',
 		'section.hide': 'Hide section',
-		'section.up': 'Move up',
-		'section.down': 'Move down',
 		'section.open': 'Open section',
 		'section.close': 'Close section',
 		'section.titleLabel': 'Heading on the CV',
@@ -247,14 +253,12 @@ const UI = {
 		'section.empty': 'No items yet.',
 		'entry.add': 'Add',
 		'entry.remove': 'Remove item',
-		'entry.up': 'Move up',
-		'entry.down': 'Move down',
 		'entry.n': 'Item %1',
 		'bullets.label': 'Bullet points',
 		'bullets.add': 'Add bullet',
 		'bullets.remove': 'Remove bullet',
 		'bullets.placeholder': 'What did you do, what was the result? Use numbers.',
-		'bullets.hint': 'Start each bullet with a verb; write a measurable result.',
+		'bullets.hint': 'Enter starts a new bullet. Begin each with a verb and give a measurable result.',
 		'current': 'Present',
 		'field.name': 'Full name',
 		'field.title': 'Title',
@@ -272,7 +276,8 @@ const UI = {
 		'field.license': 'Driving licence',
 		'field.license.ph': 'e.g. B',
 		'field.birthDate': 'Date of birth',
-		'field.birthDate.ph': 'e.g. 2003',
+		'field.birthDate.ph': 'e.g. 14/05/2003',
+		'field.birthDate.enHint': 'English-language CVs usually leave out date of birth and photo.',
 		'field.photo': 'Photo',
 		'field.photo.upload': 'Choose photo',
 		'field.photo.remove': 'Remove photo',
@@ -318,6 +323,10 @@ const UI = {
 		'toolbar.fit': 'Fit',
 		'toolbar.zoom100': '100%',
 		'toolbar.pages': '%1 pages',
+		'toolbar.pages.one': '1 page',
+		'toolbar.overflow': 'Runs to %1 pages',
+		'page.n': 'Page %1',
+		'page.continues': 'Continues on page %1 ↓',
 		'toolbar.print': 'Print / PDF',
 		'toolbar.printHint': 'In the dialog choose "Save as PDF" and set margins to "None".',
 		'toolbar.export': 'Download JSON',
@@ -368,14 +377,14 @@ const DOC = {
 		present: 'Devam ediyor',
 		months: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
 		levels: { native: 'Ana dil', fluent: 'Akıcı', advanced: 'İleri', intermediate: 'Orta', basic: 'Temel' },
-		labels: { nationality: 'Uyruk', license: 'Ehliyet', birthDate: 'Doğum', gpa: 'Not ort.' },
+		labels: { nationality: 'Uyruk', license: 'Ehliyet', birthDate: 'Doğum Tarihi', gpa: 'Not ort.' },
 	},
 	en: {
 		sections: { summary: 'Summary', experience: 'Experience', projects: 'Projects', education: 'Education', involvement: 'Involvement', skills: 'Skills', certifications: 'Certifications', languages: 'Languages', awards: 'Awards', hobbies: 'Interests', references: 'References', contact: 'Contact' },
 		present: 'Present',
 		months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 		levels: { native: 'Native', fluent: 'Fluent', advanced: 'Advanced', intermediate: 'Intermediate', basic: 'Basic' },
-		labels: { nationality: 'Nationality', license: 'Driving licence', birthDate: 'Born', gpa: 'GPA' },
+		labels: { nationality: 'Nationality', license: 'Driving licence', birthDate: 'Date of birth', gpa: 'GPA' },
 	},
 };
 
@@ -386,7 +395,9 @@ export function uiLangOf(code) {
 export function makeT(lang) {
 	const table = UI[lang] || UI.en;
 	return (key, ...args) => {
-		let s = table[key] !== undefined ? table[key] : (UI.en[key] !== undefined ? UI.en[key] : key);
+		// Tekil biçim yalnızca o dilde tanımlıysa (İngilizce "1 page"); Türkçede gerekmez
+		const k = args[0] === 1 && table[`${key}.one`] !== undefined ? `${key}.one` : key;
+		let s = table[k] !== undefined ? table[k] : (UI.en[k] !== undefined ? UI.en[k] : k);
 		args.forEach((a, i) => { s = s.replace(`%${i + 1}`, String(a)); });
 		return s;
 	};
@@ -414,6 +425,18 @@ export function formatDate(value, lang) {
 		}
 	}
 	return v;
+}
+
+// Doğum tarihi: tam tarih gün.ay.yıl (İngilizce gün/ay/yıl) yazılır; yalnızca yıl ya da ay-yıl girildiyse öyle kalır
+export function formatBirthDate(value, lang) {
+	const v = String(value || '').trim();
+	const iso = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+	if (iso) {
+		const dd = iso[3].padStart(2, '0');
+		const mm = iso[2].padStart(2, '0');
+		return lang === 'en' ? `${dd}/${mm}/${iso[1]}` : `${dd}.${mm}.${iso[1]}`;
+	}
+	return formatDate(v, lang);
 }
 
 export function formatRange(start, end, current, lang) {

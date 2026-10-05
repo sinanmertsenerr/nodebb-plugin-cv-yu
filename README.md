@@ -2,10 +2,10 @@
 
 A privacy-first résumé editor that lives inside a NodeBB 4 forum at `/cv`. Built for [Yaşar Forum](https://yu.uniforum.app), usable by any forum.
 
-- **Real A4 pages.** The preview measures every block and lays it out on true A4 pages, so the page count on screen is the page count in the PDF. Section headings never end up alone at the bottom of a page.
+- **Real A4 pages.** The preview measures every block and lays it out on true A4 pages, so the page count on screen is the page count in the PDF. Section headings never end up alone at the bottom of a page. When the CV runs past one page, the preview says so and marks where each page continues.
 - **Print-ready PDF.** Printing uses the same pages at 210 × 297 mm with zero margins. The PDF is text, not an image, so it is searchable and ATS-friendly.
-- **Three templates:** clean (single column), sidebar (two columns, tinted side) and compact. Colours, three self-hosted typefaces (Inter, Source Sans 3, Source Serif 4 — all OFL), text size, line spacing, margins, heading style, contact icons and photo shape are adjustable.
-- **Twelve sections** with reordering, hiding and custom headings; bullet points per entry; a photo that is shrunk in the browser before it is stored.
+- **Four templates:** Clean (default), Harvard (black and white, serif, organisation in bold and role in italics), Sidebar (two columns; the side column comes after the main one in the PDF text so ATS read the name first) and Compact. Colours, three self-hosted typefaces (Inter, Source Sans 3, Source Serif 4 — all OFL), text size, line spacing, margins, heading style, contact icons and photo shape are adjustable.
+- **Twelve sections** with drag-to-reorder (mouse, touch and keyboard), hiding and custom headings; entries reorder the same way. Bullet points grow as you type, Enter splits a bullet, Backspace at the start joins it to the previous one and pasting several lines makes one bullet per line. A photo is shrunk in the browser before it is stored.
 - **Device-first storage.** Everything stays in the browser's local storage. Nothing reaches the server unless the person chooses *Store in my account* and gives explicit consent (the consent text names the server's country, as KVKK art. 9 requires). *Delete my data* wipes the server copy immediately; deleting the forum account deletes it too.
 - **No analytics, no third-party requests.** Fonts come from the forum's own server.
 - **JSON export and import.** Reads this plugin's format and the export format of the IEU Forum CV tool.

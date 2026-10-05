@@ -21,7 +21,7 @@ export const LIST_SECTIONS = {
 
 export const TEXT_SECTIONS = ['summary', 'hobbies'];
 
-export const TEMPLATES = ['sade', 'yan', 'sikisik'];
+export const TEMPLATES = ['sade', 'harvard', 'yan', 'sikisik'];
 export const LEVELS = ['native', 'fluent', 'advanced', 'intermediate', 'basic'];
 
 export const DEFAULT_THEME = {
@@ -36,6 +36,20 @@ export const DEFAULT_THEME = {
 	photoShape: 'circle',
 	photoSize: 'm',
 };
+
+// Şablonun kendi görünümü. Harvard siyah-beyaz ve tırnaklı yazı tipiyle gelir, diğerleri renkli.
+// Harvard'a girip çıkarken uygulanır; diğer şablonlar arasında geçişte kişinin ayarları korunur.
+export const TEMPLATE_LOOK = {
+	harvard: { font: 'serif', primary: '#111111', accent: '#111111', icons: false },
+	sade: { font: DEFAULT_THEME.font, primary: DEFAULT_THEME.primary, accent: DEFAULT_THEME.accent, icons: true },
+	yan: { font: DEFAULT_THEME.font, primary: DEFAULT_THEME.primary, accent: DEFAULT_THEME.accent, icons: true },
+	sikisik: { font: DEFAULT_THEME.font, primary: DEFAULT_THEME.primary, accent: DEFAULT_THEME.accent, icons: true },
+};
+
+export function switchTemplate(settings, next) {
+	const crossing = (settings.template === 'harvard') !== (next === 'harvard');
+	return { ...settings, template: next, theme: crossing ? { ...settings.theme, ...TEMPLATE_LOOK[next] } : settings.theme };
+}
 
 export const PALETTE = [
 	{ primary: '#1f2a37', accent: '#1a5fb4' },
@@ -90,14 +104,17 @@ export function newProfile(name, lang) {
 export function normalize(profile, fallbackLang) {
 	const base = newProfile(profile && profile.name ? profile.name : 'CV', fallbackLang);
 	const p = profile && typeof profile === 'object' ? profile : {};
+	// Bilinmeyen şablon Sade'ye döner
+	const rawTemplate = p.settings && p.settings.template;
+	const template = TEMPLATES.includes(rawTemplate) ? rawTemplate : 'sade';
 	const out = {
 		id: typeof p.id === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(p.id) ? p.id : base.id,
 		name: String(p.name || base.name).slice(0, 80),
 		updatedAt: Number.isFinite(p.updatedAt) ? p.updatedAt : Date.now(),
 		settings: {
-			template: TEMPLATES.includes(p.settings && p.settings.template) ? p.settings.template : 'sade',
+			template,
 			lang: p.settings && p.settings.lang === 'tr' ? 'tr' : (p.settings && p.settings.lang === 'en' ? 'en' : base.settings.lang),
-			theme: { ...DEFAULT_THEME, ...((p.settings && p.settings.theme) || {}) },
+			theme: { ...DEFAULT_THEME, ...(template === 'harvard' ? TEMPLATE_LOOK.harvard : {}), ...((p.settings && p.settings.theme) || {}) },
 		},
 		data: { ...base.data },
 	};

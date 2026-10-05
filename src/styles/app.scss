@@ -93,12 +93,26 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 .cv-app {
     display: flex;
     flex-direction: column;
-    height: clamp(600px, calc(100vh - 150px), 1100px);
-    margin: 4px 8px 16px;
+    // Ekranın kalanını doldurur; --cv-app-top, kutunun sayfadaki üst kenarıdır (main.jsx ölçer)
+    height: max(560px, calc(100vh - var(--cv-app-top, 130px) - 16px));
+    height: max(560px, calc(100dvh - var(--cv-app-top, 130px) - 16px));
+    margin: 0 8px 16px;
     overflow: hidden;
-    border: 1px solid var(--cvu-line);
+    border: 1px solid var(--bs-border-color, var(--cvu-line));
     border-radius: 12px;
     background-color: var(--bs-body-bg);
+}
+
+// Masaüstünde kutu forum başlığının alt çizgisine dayanır: o çizgi kutunun üst kenarı olur
+@media screen and (min-width: 992px) {
+    .cv-yu-page {
+        margin-top: -1rem;
+    }
+
+    .cv-app {
+        border-top: 0;
+        border-radius: 0 0 12px 12px;
+    }
 }
 
 .cv-top {
@@ -355,8 +369,14 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 12px 10px 40px 10px;
+    padding: 4px 10px 40px 10px;
     border-right: 1px solid var(--cvu-line);
+}
+
+// Üst çubuğun çizgisinin hemen altında ikinci bir çizgi olmasın
+.cv-side > .cv-card:first-child,
+.cv-side > .cv-banner + .cv-card {
+    border-top-color: transparent;
 }
 
 .cv-main {
@@ -378,9 +398,35 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 }
 
 .cv-pagecount {
+    display: inline-flex;
+    flex: none;
+    white-space: nowrap;
+    align-items: center;
+    gap: 5px;
     color: var(--cvu-ink2);
     font-size: 13px;
     font-weight: 600;
+}
+
+// Dar masaüstünde yazı etiketleri gizlenir, seçenekler tek satırda kalır
+@media screen and (max-width: 1279.98px) {
+    .cv-top-label,
+    .cv-print-hint {
+        display: none;
+    }
+}
+
+// Tek sayfaya sığmadıysa sarı uyarı
+.cv-pagecount.is-over {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: #fff4d6;
+    color: #7a4b00;
+}
+
+.cv-pagecount svg {
+    width: 14px;
+    height: 14px;
 }
 
 .cv-print-hint {
@@ -483,9 +529,13 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     opacity: .5;
 }
 
-.cvf-area {
-    resize: vertical;
-    min-height: 72px;
+// Yazdıkça aşağı uzayan kutu (AutoText): en az --rows satır
+.cvf-auto {
+    display: block;
+    min-height: calc(var(--rows, 1) * 1.35em + 16px);
+    overflow: hidden;
+    resize: none;
+    field-sizing: content;
 }
 
 .cvf-hint {
@@ -651,12 +701,76 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 .cv-item-legend {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 4px;
     width: 100%;
     padding: 6px 0;
     color: var(--cvu-muted);
     font-size: 12.5px;
     font-weight: 600;
+}
+
+.cv-item-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--cvu-ink2);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Sürükleme tutamacı ve sürüklenen öğe
+.cv-grip {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--cvu-muted);
+    cursor: grab;
+    touch-action: none;
+}
+
+.cv-grip:hover,
+.cv-grip:focus-visible {
+    background-color: var(--cvu-hover);
+    color: var(--cvu-ink);
+}
+
+.cv-grip svg {
+    width: 16px;
+    height: 16px;
+}
+
+.cv-sortable.is-sorting {
+    user-select: none;
+}
+
+.cv-sortable.is-sorting > [data-sort-item] {
+    transition: transform .16s ease;
+}
+
+.cv-sortable.is-sorting > .is-dragging {
+    position: relative;
+    z-index: 3;
+    border-radius: 10px;
+    background-color: var(--bs-body-bg);
+    box-shadow: 0 10px 28px -10px rgba(16, 32, 42, .4), 0 0 0 1px rgba(var(--cvu-accent-rgb), .35);
+    cursor: grabbing;
+    transition: none;
+}
+
+.cv-sortable.is-sorting > .is-dragging .cv-grip {
+    cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cv-sortable.is-sorting > [data-sort-item] {
+        transition: none;
+    }
 }
 
 .cv-bullet-list {
@@ -670,7 +784,21 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 
 .cv-bullet-list li {
     display: flex;
+    align-items: flex-start;
     gap: 4px;
+}
+
+.cv-bullet-list .cvb-icon {
+    flex: none;
+    margin-top: 1px;
+}
+
+.cv-preview-error {
+    margin: 32px auto;
+    max-width: 420px;
+    color: var(--cvu-ink2);
+    font-size: 14px;
+    text-align: center;
 }
 
 .cv-photo-row {
@@ -914,6 +1042,17 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     font-size: var(--cv-size);
     line-height: var(--cv-lh);
     -webkit-font-smoothing: antialiased;
+
+    // Forumun (Bootstrap) başlık/paragraf kuralları CV'ye sızmasın: ölçüm ve baskı her sitede aynı olsun
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    :where(h1, h2, h3, p, ul, ol) {
+        margin: 0;
+    }
 }
 
 .cv-page {
@@ -925,6 +1064,35 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     overflow: hidden;
     background: #fff;
     box-shadow: 0 2px 4px rgba(16, 32, 42, .08), 0 12px 32px -12px rgba(16, 32, 42, .3);
+}
+
+// Sayfa etiketleri (yalnızca ekranda): üstte "1. sayfa / 2", taşan sayfanın altında devam uyarısı
+.cv-page-tag,
+.cv-page-cont {
+    position: absolute;
+    right: 14px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-family: var(--bs-body-font-family, system-ui, sans-serif);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0;
+    text-transform: none;
+    pointer-events: none;
+}
+
+.cv-page-tag {
+    top: 8px;
+    background-color: #eef1f4;
+    color: #46525c;
+}
+
+.cv-page-cont {
+    bottom: 8px;
+    background-color: #fff4d6;
+    color: #7a4b00;
 }
 
 .cv-page--measure {
@@ -941,6 +1109,12 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     position: relative;
     display: flex;
     align-items: flex-start;
+}
+
+// Yan sütun HTML'de ana sütundan sonra gelir (ATS önce adı okusun), ekranda yine solda durur
+.cv-cols--rev {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
 .cv-col {
@@ -1021,15 +1195,15 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
     word-break: break-word;
 }
 
+.cv-contact--stack .cv-ico {
+    margin-top: .2em;
+}
+
 .cv-ico {
     width: 1em;
     height: 1em;
     flex-shrink: 0;
     color: var(--cv-accent);
-}
-
-.cv-contact--stack .cv-ico {
-    margin-top: .2em;
 }
 
 .cv-extras {
@@ -1045,6 +1219,7 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 .cv-h2 {
     margin: 0;
     padding-bottom: 3px;
+    line-height: 1.2;
     border-bottom: 1.5px solid var(--cv-accent);
     color: var(--cv-primary);
     font-size: 1em;
@@ -1193,6 +1368,64 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
 
 .cv-header--sade .cv-contact {
     justify-content: center;
+}
+
+// Harvard: tek sütun, siyah-beyaz, ortalı ad; kurum kalın, pozisyon italik, yer ve tarih sağda
+.cv-pages--harvard {
+    --cv-ink2: #22272c;
+    --cv-muted: #2f353b;
+}
+
+.cv-header--harvard {
+    justify-content: center;
+    text-align: center;
+}
+
+.cv-header--harvard .cv-name {
+    font-size: 2em;
+    letter-spacing: 0;
+}
+
+.cv-header--harvard .cv-title {
+    font-weight: 400;
+}
+
+.cv-header--harvard .cv-contact {
+    justify-content: center;
+    gap: 2px 0;
+    margin-top: 6px;
+}
+
+.cv-header--harvard .cv-contact li + li::before {
+    content: "•";
+    margin: 0 .55em;
+    color: var(--cv-muted);
+}
+
+.cv-header--harvard .cv-extras {
+    margin-top: 3px;
+}
+
+.cv-pages--harvard .cv-h2 {
+    padding-bottom: 2px;
+    border-bottom-width: 1px;
+    letter-spacing: .03em;
+}
+
+.cv-pages--harvard .cv-h2--caps {
+    font-size: .9em;
+    letter-spacing: .07em;
+}
+
+.cv-entry-role {
+    min-width: 0;
+    color: var(--cv-ink2);
+    font-style: italic;
+}
+
+.cv-pages--harvard .cv-entry-right {
+    color: var(--cv-ink2);
+    font-size: .95em;
 }
 
 // Yan sütun: soldaki renkli şerit tüm sayfa boyunca
@@ -1426,6 +1659,11 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
         width: 44px;
     }
 
+    .cv-grip {
+        width: 32px;
+        height: 44px;
+    }
+
     .cvf-input {
         font-size: 16px;
     }
@@ -1512,7 +1750,9 @@ $latin-ext: "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+
         page-break-after: auto !important;
     }
 
-    .cv-empty {
+    .cv-empty,
+    .cv-page-tag,
+    .cv-page-cont {
         display: none !important;
     }
 }

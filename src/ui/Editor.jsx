@@ -1,9 +1,11 @@
-// Sol panel: kişisel bilgiler ve bölümler. Her alanın görünür etiketi var; sıralama ok tuşlarıyla (klavyeyle de çalışır).
-import { useState } from 'preact/hooks';
+// Sol panel: kişisel bilgiler ve bölümler. Her alanın görünür etiketi var.
+// Bölümler ve öğeler tutamaçtan tutup sürüklenerek sıralanır; tutamaç odaktayken ↑/↓ da taşır.
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { LIST_SECTIONS, TEXT_SECTIONS, LEVELS, emptyItem, sectionHasContent } from '../model.js';
 import { doc } from '../i18n.js';
 import { shrinkPhoto } from '../storage.js';
 import { Icon } from './icons.jsx';
+import { moveItem, useSortable } from './sortable.js';
 
 const FIELD_LABEL = {
 	experience: { role: 'field.role', company: 'field.company', location: 'field.location', start: 'field.start', end: 'field.end' },
@@ -30,20 +32,117 @@ export function Field({ id, label, value, onInput, placeholder, type, wide, auto
 	);
 }
 
+function IconButton({ label, icon, onClick, disabled, pressed, danger }) {
+	return (
+		<button type="button" class={`cvb-icon ${danger ? 'cvb-icon--danger' : ''}`} aria-label={label} title={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}>
+			<Icon name={icon} />
+		</button>
+	);
+}
+
+// Yazdıkça aşağı doğru uzayan metin kutusu. field-sizing destekleyen tarayıcıda CSS yapar, diğerlerinde yükseklik ölçülür.
+const FIELD_SIZING = typeof CSS !== 'undefined' && !!CSS.supports && CSS.supports('field-sizing', 'content');
+
+function fit(el) {
+	if (FIELD_SIZING || !el || !el.offsetWidth) return;
+	el.style.height = 'auto';
+	el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+}
+
+export function AutoText({ value, onInput, rows, class: cls, ...rest }) {
+	const ref = useRef(null);
+	useLayoutEffect(() => { fit(ref.current); }, [value]);
+	useEffect(() => {
+		// Genişlik değişince (telefon döndü, sekme açıldı) yeniden ölç
+		if (FIELD_SIZING || typeof ResizeObserver === 'undefined') return undefined;
+		let width = 0;
+		const ro = new ResizeObserver((entries) => {
+			const w = entries[0].contentRect.width;
+			if (w && w !== width) { width = w; fit(ref.current); }
+		});
+		ro.observe(ref.current);
+		return () => ro.disconnect();
+	}, []);
+	return <textarea ref={ref} class={`cvf-input cvf-auto ${cls || ''}`} rows={rows || 1} style={{ '--rows': rows || 1 }} value={value || ''} onInput={e => onInput(e.currentTarget.value)} data-bwignore data-1p-ignore data-lpignore="true" {...rest} />;
+}
+
 function Area({ id, label, value, onInput, placeholder, rows, hint }) {
 	return (
 		<div class="cvf cvf--wide">
 			<label class="cvf-label" for={id}>{label}</label>
-			<textarea class="cvf-input cvf-area" id={id} rows={rows || 4} value={value || ''} placeholder={placeholder || ''} onInput={e => onInput(e.currentTarget.value)} />
+			<AutoText id={id} rows={rows || 3} value={value} placeholder={placeholder || ''} onInput={onInput} />
 			{hint ? <p class="cvf-hint">{hint}</p> : null}
 		</div>
 	);
 }
 
-function IconButton({ label, icon, onClick, disabled, pressed, danger }) {
+// Maddeler: her madde kendi satırında uzar. Enter imlecin yerinden böler, satır başında ⌫ öncekiyle birleştirir,
+// çok satırlı yapıştırma her satırı ayrı madde yapar.
+const BULLET_MARK = /^\s*(?:[-–—•*·▪●◦]|\d{1,2}[.)])\s*/;
+
+function BulletList({ t, base, bullets, setBullets }) {
+	const listRef = useRef(null);
+	const focusAt = useRef(null);
+	useLayoutEffect(() => {
+		if (!focusAt.current) return;
+		const [i, caret] = focusAt.current;
+		focusAt.current = null;
+		const el = listRef.current && listRef.current.querySelectorAll('textarea')[i];
+		if (!el) return;
+		el.focus();
+		const pos = caret === 'end' ? el.value.length : caret;
+		el.setSelectionRange(pos, pos);
+	});
+	const replaceAt = (i, parts, focus) => {
+		const next = bullets.slice();
+		next.splice(i, 1, ...parts);
+		focusAt.current = focus;
+		setBullets(next);
+	};
+	const onKeyDown = i => (e) => {
+		if (e.isComposing) return;
+		const el = e.currentTarget;
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			replaceAt(i, [el.value.slice(0, el.selectionStart).trimEnd(), el.value.slice(el.selectionEnd).trimStart()], [i + 1, 0]);
+		} else if (e.key === 'Backspace' && i > 0 && el.selectionStart === 0 && el.selectionEnd === 0) {
+			e.preventDefault();
+			const prev = bullets[i - 1];
+			const next = bullets.slice();
+			next.splice(i - 1, 2, prev + el.value);
+			focusAt.current = [i - 1, prev.length];
+			setBullets(next);
+		}
+	};
+	const onPaste = i => (e) => {
+		const text = e.clipboardData ? e.clipboardData.getData('text') : '';
+		const lines = /\n/.test(text.trim()) ? text.split(/\r?\n/).map(l => l.replace(BULLET_MARK, '').trim()).filter(Boolean) : [];
+		if (lines.length < 2) return;
+		e.preventDefault();
+		const el = e.currentTarget;
+		const last = lines.length - 1;
+		lines[0] = el.value.slice(0, el.selectionStart) + lines[0];
+		const caret = lines[last].length;
+		lines[last] += el.value.slice(el.selectionEnd);
+		replaceAt(i, lines, [i + last, caret]);
+	};
 	return (
-		<button type="button" class={`cvb-icon ${danger ? 'cvb-icon--danger' : ''}`} aria-label={label} title={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}>
-			<Icon name={icon} />
+		<ul class="cv-bullet-list" ref={listRef}>
+			{bullets.map((b, i) => (
+				<li key={i}>
+					<AutoText id={`${base}-b${i}`} class="cv-bullet-input" aria-label={`${t('bullets.label')} ${i + 1}`} value={b} placeholder={t('bullets.placeholder')}
+						onInput={v => replaceAt(i, [v.replace(/\s*\n\s*/g, ' ')], null)} onKeyDown={onKeyDown(i)} onPaste={onPaste(i)} />
+					<IconButton label={t('bullets.remove')} icon="x" onClick={() => replaceAt(i, bullets.length > 1 ? [] : [''], bullets.length > 1 ? [Math.max(0, i - 1), 'end'] : [0, 0])} />
+				</li>
+			))}
+		</ul>
+	);
+}
+
+function Grip({ label, sortKey, sort }) {
+	return (
+		<button type="button" class="cv-grip" aria-label={label} title={label} data-sort-key={sortKey} onPointerDown={sort.onPointerDown} onKeyDown={sort.onKeyDown}>
+			<Icon name="grip" />
 		</button>
 	);
 }
@@ -88,32 +187,27 @@ function PersonalForm({ t, profile, update }) {
 			<Field id={`${pid}-website`} label={t('field.website')} value={p.website} onInput={v => set('website', v)} inputmode="url" autocomplete="url" />
 			<Field id={`${pid}-nationality`} label={t('field.nationality')} value={p.nationality} onInput={v => set('nationality', v)} />
 			<Field id={`${pid}-license`} label={t('field.license')} value={p.license} onInput={v => set('license', v)} placeholder={t('field.license.ph')} />
-			<Field id={`${pid}-birth`} label={t('field.birthDate')} value={p.birthDate} onInput={v => set('birthDate', v)} placeholder={t('field.birthDate.ph')} />
+			<Field id={`${pid}-birth`} label={t('field.birthDate')} value={p.birthDate} onInput={v => set('birthDate', v)} placeholder={t('field.birthDate.ph')} hint={profile.settings.lang === 'en' ? t('field.birthDate.enHint') : ''} />
 		</div>
 	);
 }
 
-function ItemForm({ t, type, item, idx, count, profile, update }) {
+// Öğe başlığı: doldurulmuşsa öğenin kendi adı (taranması kolay), değilse sıra numarası
+const ENTRY_NAME = ['role', 'name', 'degree', 'group'];
+
+function ItemForm({ t, type, item, idx, count, profile, update, sort }) {
 	const def = LIST_SECTIONS[type];
 	const base = `${profile.id}-${type}-${item.id}`;
 	const setItem = patch => update(d => ({ ...d, [type]: d[type].map((it, i) => (i === idx ? { ...it, ...patch } : it)) }));
 	const remove = () => update(d => ({ ...d, [type]: d[type].filter((_, i) => i !== idx) }));
-	const move = (dir) => update((d) => {
-		const list = d[type].slice();
-		const j = idx + dir;
-		if (j < 0 || j >= list.length) return d;
-		[list[idx], list[j]] = [list[j], list[idx]];
-		return { ...d, [type]: list };
-	});
-	const bullets = item.bullets || [];
-	const setBullet = (i, v) => setItem({ bullets: bullets.map((b, k) => (k === i ? v : b)) });
+	const nameKey = ENTRY_NAME.find(k => item[k] && String(item[k]).trim());
+	const name = nameKey ? String(item[nameKey]).trim() : t('entry.n', idx + 1);
 	return (
-		<fieldset class="cv-item">
+		<fieldset class="cv-item" data-sort-item>
 			<legend class="cv-item-legend">
-				<span>{t('entry.n', idx + 1)}</span>
+				{count > 1 ? <Grip label={t('sort.entry', name)} sortKey={item.id} sort={sort} /> : null}
+				<span class="cv-item-name">{name}</span>
 				<span class="cv-item-tools">
-					<IconButton label={t('entry.up')} icon="up" onClick={() => move(-1)} disabled={idx === 0} />
-					<IconButton label={t('entry.down')} icon="down" onClick={() => move(1)} disabled={idx === count - 1} />
 					<IconButton label={t('entry.remove')} icon="trash" onClick={remove} danger />
 				</span>
 			</legend>
@@ -152,15 +246,8 @@ function ItemForm({ t, type, item, idx, count, profile, update }) {
 				{def.bullets ? (
 					<div class="cvf cvf--wide">
 						<span class="cvf-label">{t('bullets.label')}</span>
-						<ul class="cv-bullet-list">
-							{bullets.map((b, i) => (
-								<li key={i}>
-									<input class="cvf-input" aria-label={`${t('bullets.label')} ${i + 1}`} value={b} placeholder={t('bullets.placeholder')} onInput={e => setBullet(i, e.currentTarget.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setItem({ bullets: [...bullets.slice(0, i + 1), '', ...bullets.slice(i + 1)] }); } }} />
-									<IconButton label={t('bullets.remove')} icon="x" onClick={() => setItem({ bullets: bullets.length > 1 ? bullets.filter((_, k) => k !== i) : [''] })} />
-								</li>
-							))}
-						</ul>
-						<button type="button" class="cvb cvb--ghost cvb--sm" onClick={() => setItem({ bullets: [...bullets, ''] })}><Icon name="plus" />{t('bullets.add')}</button>
+						<BulletList t={t} base={base} bullets={item.bullets && item.bullets.length ? item.bullets : ['']} setBullets={next => setItem({ bullets: next })} />
+						<button type="button" class="cvb cvb--ghost cvb--sm" onClick={() => setItem({ bullets: [...(item.bullets || []), ''] })}><Icon name="plus" />{t('bullets.add')}</button>
 						<p class="cvf-hint">{t('bullets.hint')}</p>
 					</div>
 				) : null}
@@ -183,37 +270,38 @@ function SectionBody({ t, type, profile, update }) {
 	return (
 		<div>
 			{type === 'references' ? <p class="cv-note"><Icon name="info" />{t('references.hint')}</p> : null}
-			{list.length ? list.map((item, idx) => <ItemForm key={item.id} t={t} type={type} item={item} idx={idx} count={list.length} profile={profile} update={update} />) : <p class="cvf-hint">{t('section.empty')}</p>}
+			{list.length ? <ItemList t={t} type={type} list={list} profile={profile} update={update} /> : <p class="cvf-hint">{t('section.empty')}</p>}
 			<button type="button" class="cvb cvb--secondary" onClick={() => update(x => ({ ...x, [type]: [...(x[type] || []), emptyItem(type)] }))}><Icon name="plus" />{t('entry.add')} · {t(`section.${type}`)}</button>
 		</div>
 	);
 }
 
-function SectionCard({ t, profile, update, section, index, count, open, onToggle }) {
+function ItemList({ t, type, list, profile, update }) {
+	const sort = useSortable((from, to) => update(d => ({ ...d, [type]: moveItem(d[type], from, to) })));
+	return (
+		<div class="cv-sortable">
+			{list.map((item, idx) => <ItemForm key={item.id} t={t} type={type} item={item} idx={idx} count={list.length} profile={profile} update={update} sort={sort} />)}
+		</div>
+	);
+}
+
+function SectionCard({ t, profile, update, section, open, onToggle, sort }) {
 	const { type } = section;
 	const lang = profile.settings.lang;
 	const filled = sectionHasContent(profile.data, type);
 	const items = TEXT_SECTIONS.includes(type) ? (filled ? 1 : 0) : (profile.data[type] || []).length;
 	const setSection = patch => update(d => ({ ...d, sections: d.sections.map(s => (s.type === type ? { ...s, ...patch } : s)) }));
-	const move = (dir) => update((d) => {
-		const list = d.sections.slice();
-		const j = index + dir;
-		if (j < 0 || j >= list.length) return d;
-		[list[index], list[j]] = [list[j], list[index]];
-		return { ...d, sections: list };
-	});
 	const bodyId = `${profile.id}-sec-${type}`;
 	return (
-		<section class={`cv-card ${section.visible ? '' : 'cv-card--hidden'}`}>
+		<section class={`cv-card ${section.visible ? '' : 'cv-card--hidden'}`} data-sort-item>
 			<div class="cv-card-head">
+				<Grip label={t('sort.section', t(`section.${type}`))} sortKey={type} sort={sort} />
 				<button type="button" class="cv-card-toggle" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
 					<Icon name={open ? 'chevron-down' : 'chevron-right'} />
 					<span class="cv-card-title">{t(`section.${type}`)}</span>
 					{items ? <span class="cv-count" aria-label={t('entry.n', items)}>{items}</span> : null}
 				</button>
 				<span class="cv-card-tools">
-					<IconButton label={t('section.up')} icon="up" onClick={() => move(-1)} disabled={index === 0} />
-					<IconButton label={t('section.down')} icon="down" onClick={() => move(1)} disabled={index === count - 1} />
 					<IconButton label={section.visible ? t('section.hide') : t('section.show')} icon={section.visible ? 'eye' : 'eye-off'} pressed={!section.visible} onClick={() => setSection({ visible: !section.visible })} />
 				</span>
 			</div>
@@ -233,6 +321,7 @@ export function Editor({ t, profile, update }) {
 	const [open, setOpen] = useState({ personal: true });
 	const toggle = key => setOpen(o => ({ ...o, [key]: !o[key] }));
 	const sections = profile.data.sections;
+	const sort = useSortable((from, to) => update(d => ({ ...d, sections: moveItem(d.sections, from, to) })));
 	return (
 		<div class="cv-editor">
 			<section class="cv-card">
@@ -246,9 +335,11 @@ export function Editor({ t, profile, update }) {
 			</section>
 			<h2 class="cv-editor-h">{t('sections.title')}</h2>
 			<p class="cvf-hint cv-editor-help">{t('sections.help')}</p>
-			{sections.map((s, i) => (
-				<SectionCard key={s.type} t={t} profile={profile} update={update} section={s} index={i} count={sections.length} open={!!open[s.type]} onToggle={() => toggle(s.type)} />
-			))}
+			<div class="cv-sortable">
+				{sections.map(s => (
+					<SectionCard key={s.type} t={t} profile={profile} update={update} section={s} open={!!open[s.type]} onToggle={() => toggle(s.type)} sort={sort} />
+				))}
+			</div>
 		</div>
 	);
 }

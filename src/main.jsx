@@ -1,12 +1,12 @@
 // Uygulama kökü: durum, kayıt (cihaz / hesap), araç çubuğu, düzenleyici ve önizleme. window.YuCV.mount/unmount ile bağlanır.
 import { render } from 'preact';
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { makeT, uiLangOf } from './i18n.js';
-import { EXPORT_FORMAT, TEMPLATES, newProfile, normalize, parseImport } from './model.js';
+import { EXPORT_FORMAT, TEMPLATES, newProfile, normalize, parseImport, switchTemplate } from './model.js';
 import { api, clearLocal, downloadJSON, loadLocal, merge, saveLocal } from './storage.js';
 import { Editor, Field } from './ui/Editor.jsx';
 import { ThemePanel } from './ui/ThemePanel.jsx';
-import { Preview } from './ui/Preview.jsx';
+import { Preview, PreviewBoundary } from './ui/Preview.jsx';
 import { Icon } from './ui/icons.jsx';
 
 const MAX_PROFILES = 5;
@@ -114,6 +114,17 @@ function App({ ctx }) {
 	const dirty = useRef(new Set());
 	const client = useMemo(() => api(ctx), [ctx]);
 	const fileRef = useRef(null);
+
+	const appRef = useRef(null);
+	// Çalışma alanı ekranın kalanını doldurur: üst kenarının sayfadaki yerini ölç, yüksekliği CSS hesaplar
+	useLayoutEffect(() => {
+		const el = appRef.current;
+		if (!el) return undefined;
+		const measure = () => { el.style.setProperty('--cv-app-top', `${Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY))}px`); };
+		measure();
+		window.addEventListener('resize', measure);
+		return () => window.removeEventListener('resize', measure);
+	}, [state.loaded]);
 
 	const notify = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 4000); }, []);
 
@@ -255,11 +266,12 @@ function App({ ctx }) {
 	if (!state.loaded || !active) return <div class="cv-yu-loading" role="status">…</div>;
 
 	const docLang = active.settings.lang;
+	const pageLabels = { page: n => t('page.n', n), continues: n => t('page.continues', n) };
 	const needsBackup = !state.account.enabled && state.changes >= BACKUP_AFTER_CHANGES && Date.now() - state.lastBackup > BACKUP_AFTER_MS;
 	const statusText = status === 'saving' ? t('storage.saving') : status === 'saved' ? t('storage.saved') : status.startsWith('error:') ? t('storage.error', status.slice(6)) : '';
 
 	return (
-		<div class={`cv-app cv-app--${tab}`}>
+		<div class={`cv-app cv-app--${tab}`} ref={appRef}>
 			<div class="cv-top">
 				<div class="cv-top-left">
 					<label class="cv-top-field">
@@ -291,7 +303,7 @@ function App({ ctx }) {
 						<div class="cv-seg" role="group">
 							{TEMPLATES.map(k => (
 								<label class={`cv-seg-item ${active.settings.template === k ? 'is-on' : ''}`} key={k}>
-									<input type="radio" name={`${active.id}-template`} value={k} checked={active.settings.template === k} onChange={() => setSettings({ template: k })} />
+									<input type="radio" name={`${active.id}-template`} value={k} checked={active.settings.template === k} onChange={() => setProfile({ ...active, settings: switchTemplate(active.settings, k) })} />
 									<span>{t(`template.${k}`)}</span>
 								</label>
 							))}
@@ -345,7 +357,7 @@ function App({ ctx }) {
 			</div>
 
 			<div class="cv-body">
-				<aside class="cv-side">
+				<aside class="cv-side" data-sort-scroll>
 					{needsBackup ? <div class="cv-banner"><Icon name="download" /><span>{t('storage.backupHint')}</span><button type="button" class="cvb cvb--sm cvb--secondary" onClick={exportJSON}>{t('toolbar.export')}</button></div> : null}
 					<section class="cv-card">
 						<div class="cv-card-head">
@@ -365,11 +377,13 @@ function App({ ctx }) {
 							<button type="button" class={`cv-seg-btn ${zoom === 'fit' ? 'is-on' : ''}`} aria-pressed={zoom === 'fit'} onClick={() => setZoom('fit')}><Icon name="fit" />{t('toolbar.fit')}</button>
 							<button type="button" class={`cv-seg-btn ${zoom === 1 ? 'is-on' : ''}`} aria-pressed={zoom === 1} onClick={() => setZoom(1)}><Icon name="zoom-in" />{t('toolbar.zoom100')}</button>
 						</div>
-						<span class="cv-pagecount">{t('toolbar.pages', pageCount)}</span>
+						<span class={`cv-pagecount ${pageCount > 1 ? 'is-over' : ''}`} role="status">{pageCount > 1 ? <Icon name="info" /> : null}{pageCount > 1 ? t('toolbar.overflow', pageCount) : t('toolbar.pages', pageCount)}</span>
 						<span class="cv-print-hint">{t('toolbar.printHint')}</span>
 					</div>
 					<PreviewScroller zoom={zoom} pageCount={pageCount}>
-						<Preview profile={active} zoom={zoom} onLayout={setPageCount} docLang={docLang} emptyHint={[t('empty.title'), t('empty.body')]} />
+						<PreviewBoundary resetKey={active} message={t('preview.error')}>
+							<Preview profile={active} zoom={zoom} onLayout={setPageCount} docLang={docLang} emptyHint={[t('empty.title'), t('empty.body')]} pageLabels={pageLabels} />
+						</PreviewBoundary>
 					</PreviewScroller>
 				</main>
 			</div>

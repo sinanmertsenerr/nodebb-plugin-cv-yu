@@ -5,6 +5,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>cv-yu harness</title>
 	<!-- NodeBB dışında test sayfası: build.mjs bunu static/dist/harness.html olarak gerçek dosya adlarıyla üretir -->
+	<!-- Forumdaki temel stil (Bootstrap reboot): CV'nin forum CSS'inden etkilenmediğini burada da sınarız -->
+	<link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap-reboot.min.css">
 	<link rel="stylesheet" href="./{{css}}">
 	<style>
 		:root { --bs-body-font-family: Inter, system-ui, sans-serif; --bs-body-color: #1f272b; --bs-body-bg: #fff; }
@@ -21,6 +23,9 @@
 			var profile = window.SAMPLE_PROFILE;
 			if (params.get('template')) profile.settings.template = params.get('template');
 			if (params.get('lang')) profile.settings.lang = params.get('lang');
+			['margins', 'size', 'spacing', 'font', 'primary', 'accent'].forEach(function (k) { if (params.get(k)) profile.settings.theme[k] = params.get(k); });
+			if (params.get('icons')) profile.settings.theme.icons = params.get('icons') === '1';
+			if (params.get('photo') === '1') profile.data.personal.photo = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#9aa6b2"/></svg>');
 			var initial = { profiles: { ornek1: profile }, activeId: 'ornek1', account: { enabled: false, consentAt: 0 }, lastBackup: Date.now(), changes: 0 };
 			window.YuCV.mount(document.getElementById('cv-yu-root'), { uid: 0, relativePath: '', csrf: '', uiLang: params.get('ui') || 'tr', fonts: '', initial: initial });
 		}());

@@ -16,6 +16,19 @@ test('yeni profil tam ve normalize değişmeden geçer', async () => {
 	assert.equal(p.data.sections.length, M.SECTION_TYPES.length);
 	assert.deepEqual(M.normalize(p, 'tr'), p);
 	assert.equal(M.normalize({ settings: { template: 'bilinmeyen', lang: 'xx' }, data: { sections: [{ type: 'skills' }, { type: 'skills' }] } }, 'en').settings.template, 'sade');
+	const old = M.normalize({ settings: { template: 'eski', theme: { primary: '#0b5', size: 'l' } } }, 'tr');
+	assert.equal(old.settings.template, 'sade');
+	assert.equal(M.normalize({ settings: { template: 'yan' } }, 'tr').settings.template, 'yan');
+	assert.equal(M.newProfile('X', 'tr').settings.template, 'sade');
+	assert.equal(old.settings.theme.primary, '#0b5');
+	assert.equal(old.settings.theme.size, 'l');
+	assert.equal(M.normalize({ settings: { template: 'harvard' } }, 'tr').settings.theme.font, 'serif');
+	const toH = M.switchTemplate({ template: 'sade', theme: { ...M.DEFAULT_THEME, size: 's' } }, 'harvard');
+	assert.equal(toH.theme.font, 'serif');
+	assert.equal(toH.theme.size, 's');
+	const back = M.switchTemplate(toH, 'sikisik');
+	assert.equal(back.theme.primary, M.DEFAULT_THEME.primary);
+	assert.equal(M.switchTemplate({ template: 'sade', theme: { primary: '#123' } }, 'sikisik').theme.primary, '#123');
 	const n = M.normalize({ data: { sections: [{ type: 'skills', visible: false }] } }, 'en');
 	assert.equal(n.data.sections[0].type, 'skills');
 	assert.equal(n.data.sections.length, M.SECTION_TYPES.length);
@@ -62,4 +75,21 @@ test('tarihler CV diline göre', async () => {
 	assert.equal(M.formatRange('', '2022', false, 'en'), '2022');
 	assert.equal(M.makeT('tr')('toolbar.pages', 2), '2 sayfa');
 	assert.equal(M.makeT('xx')('close'), 'Close');
+});
+
+test('doğum tarihi: tam tarih gün.ay.yıl, yalnızca yıl olduğu gibi', async () => {
+	const M = await load();
+	assert.equal(M.formatBirthDate('2003-05-04', 'tr'), '04.05.2003');
+	assert.equal(M.formatBirthDate('2003-05-04', 'en'), '04/05/2003');
+	assert.equal(M.formatBirthDate('2003', 'tr'), '2003');
+	assert.equal(M.formatBirthDate('14.05.2003', 'tr'), '14.05.2003');
+	assert.equal(M.formatBirthDate('', 'tr'), '');
+	assert.equal(M.doc('tr').labels.birthDate, 'Doğum Tarihi');
+});
+
+test('sürükle-bırak sıralaması öğeyi doğru yere taşır', async () => {
+	const { moveItem } = await import('../src/ui/sortable.js');
+	assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 0, 2), ['b', 'c', 'a', 'd']);
+	assert.deepEqual(moveItem(['a', 'b', 'c', 'd'], 3, 1), ['a', 'd', 'b', 'c']);
+	assert.deepEqual(moveItem(['a', 'b'], 1, 1), ['a', 'b']);
 });
