@@ -46,6 +46,10 @@ const FONTS = [
 	['playfair-display', '@fontsource-variable/playfair-display'],
 	['lato', '@fontsource/lato'],
 ];
+// Yalnız harf aralığı ve aksan yerleşimi kalır. Değişik glif üreten özellikler (locl, calt, liga, tnum, case…) dosyadan
+// atılır: Safari'nin PDF'i bu glifleri harfe geri çeviremiyor, ATS ve yapay zekâ metni bozuk okuyordu (tırnaklı
+// ailelerde Türkçe locl "i"yi "1" yapıyordu, Inter'de tnum tarihleri "NisSTUTV").
+const KEEP_FEATURES = ['kern', 'mark', 'mkmk', 'ccmp'];
 const FONT_FILE = /^(.+)-(latin|latin-ext)-(wght|400|700)-(normal|italic)\.woff2$/;
 
 async function copyFonts() {
@@ -58,6 +62,7 @@ async function copyFonts() {
 			const variable = FONT_FILE.exec(f)[3] === 'wght';
 			const out = await subsetFont(await readFile(path.join(dir, f)), rangeText(FONT_RANGES[subset]), {
 				targetFormat: 'woff2',
+				keepFeatures: KEEP_FEATURES,
 				...(variable ? { variationAxes: { wght: { ...FONT_WEIGHTS, default: FONT_WEIGHTS.min } } } : {}),
 			});
 			await writeFile(path.join(fontsDir, f), out);
@@ -119,9 +124,12 @@ async function buildOnce() {
 	console.log(`${jsName} ${(jsText.length / 1024).toFixed(0)} KB, ${cssName} ${(css.length / 1024).toFixed(0)} KB`);
 }
 
-// SCSS'teki unicode-range ve ağırlık aralığı yazı tipleriyle aynı kalsın diye buradan üretilir
-await writeFile('src/styles/_font-ranges.scss', `// build.mjs üretir, elle değiştirme\n$latin: "${FONT_RANGES.latin}";\n$latin-ext: "${FONT_RANGES['latin-ext']}";\n$font-weights: ${FONT_WEIGHTS.min} ${FONT_WEIGHTS.max};\n`);
 await copyFonts();
+// SCSS'teki unicode-range ve ağırlık aralığı yazı tipleriyle aynı kalsın diye buradan üretilir. $font-version yazı tipi
+// dosyalarının özeti: adrese eklenir, dosyalar değişince tarayıcı önbellekteki eskisini kullanmaz.
+const fontFiles = (await readdir(fontsDir)).filter(f => f.endsWith('.woff2')).sort();
+const fontVersion = hash(Buffer.concat(await Promise.all(fontFiles.map(f => readFile(path.join(fontsDir, f))))));
+await writeFile('src/styles/_font-ranges.scss', `// build.mjs üretir, elle değiştirme\n$latin: "${FONT_RANGES.latin}";\n$latin-ext: "${FONT_RANGES['latin-ext']}";\n$font-weights: ${FONT_WEIGHTS.min} ${FONT_WEIGHTS.max};\n$font-version: "${fontVersion}";\n`);
 await copyPdfjs();
 await buildOnce();
 

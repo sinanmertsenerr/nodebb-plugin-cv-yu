@@ -4,7 +4,7 @@
 // CV Oluşturucu: düzenleyici forumun renk ve yazı değişkenlerini kullanır; CV sayfası kendi (basılı) tasarımını taşır.
 
 // ---------- Yazı tipleri (kendi sunucumuzdan, OFL) ----------
-// $latin, $latin-ext ve $font-weights _font-ranges.scss'ten gelir (build.mjs üretir)
+// $latin, $latin-ext, $font-weights ve $font-version _font-ranges.scss'ten gelir (build.mjs üretir)
 
 @mixin face($family, $file, $weights) {
     @each $style in (normal, italic) {
@@ -14,7 +14,7 @@
                 font-style: $style;
                 font-weight: $weights;
                 font-display: swap;
-                src: url("../fonts/#{$file}-#{$subset}-wght-#{$style}.woff2") format("woff2-variations");
+                src: url("../fonts/#{$file}-#{$subset}-wght-#{$style}.woff2?v=#{$font-version}") format("woff2-variations");
                 unicode-range: string.unquote($range);
             }
         }
@@ -31,7 +31,7 @@
                     font-style: $style;
                     font-weight: $weight;
                     font-display: swap;
-                    src: url("../fonts/#{$file}-#{$subset}-#{$weight}-#{$style}.woff2") format("woff2");
+                    src: url("../fonts/#{$file}-#{$subset}-#{$weight}-#{$style}.woff2?v=#{$font-version}") format("woff2");
                     unicode-range: string.unquote($range);
                 }
             }
@@ -1485,7 +1485,7 @@ select.cvf-input {
     // "NisSTUTV" yapıyor, Inter'in büyük harf yanındaki "(", "+", "–" biçimleri "0", "/", "W" oluyor.
     font-variant-ligatures: none;
     font-variant-numeric: normal;
-    font-feature-settings: "calt" 0, "liga" 0, "clig" 0, "tnum" 0, "case" 0;
+    font-feature-settings: "calt" 0, "liga" 0, "clig" 0, "tnum" 0, "case" 0, "locl" 0;
 
     // Forumun (Bootstrap) başlık/paragraf kuralları CV'ye sızmasın: ölçüm ve baskı her sitede aynı olsun
     *,
