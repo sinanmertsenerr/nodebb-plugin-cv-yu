@@ -5,8 +5,8 @@ const assert = require('node:assert/strict');
 
 // ESM kaynaklar dynamic import ile
 async function load() {
-	const [model, paginate, i18n] = await Promise.all([import('../src/model.js'), import('../src/paginate.js'), import('../src/i18n.js')]);
-	return { ...model, ...paginate, ...i18n };
+	const [model, paginate, i18n, importer] = await Promise.all([import('../src/model.js'), import('../src/paginate.js'), import('../src/i18n.js'), import('../src/import.js')]);
+	return { ...model, ...paginate, ...i18n, ...importer };
 }
 
 test('yeni profil tam ve normalize değişmeden geçer', async () => {

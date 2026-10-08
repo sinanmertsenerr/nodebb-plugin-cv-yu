@@ -1,7 +1,8 @@
 // Yapay zekâ ile doldurma (API yok, anahtar yok, sunucuya bir şey gitmez):
 // 1) kişiye hazır bir komut verilir, 2) kişi onu kendi seçtiği yapay zekâya yapıştırır,
 // 3) gelen JSON cevabı buraya yapıştırınca CV oluşur. Biçim LIST_SECTIONS'tan üretilir, model değişince komut da değişir.
-import { LEVELS, LIST_SECTIONS, defaultSections, normalize, parseImport, sectionHasContent } from './model.js';
+import { importAny, levelOf } from './import.js';
+import { LEVELS, LIST_SECTIONS, defaultSections, normalize, sectionHasContent } from './model.js';
 
 const AI_PERSONAL = ['name', 'title', 'location', 'email', 'phone', 'linkedin', 'github', 'website'];
 const AI_SECTIONS = ['experience', 'projects', 'education', 'involvement', 'skills', 'certifications', 'languages', 'awards'];
@@ -95,6 +96,11 @@ export function extractJSON(text) {
 	let s = String(text || '').replace(/^\uFEFF/, '').trim();
 	const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
 	if (fence) s = fence[1];
+	// Dosyanın tamamı JSON ise (en üstte dizi de olabilir) olduğu gibi okunur
+	try {
+		const whole = JSON.parse(s);
+		if (whole && typeof whole === 'object') return whole;
+	} catch (err) { /* önünde ya da arkasında yazı var; aşağıda ayıklanır */ }
 	const a = s.indexOf('{');
 	const b = s.lastIndexOf('}');
 	if (a < 0 || b <= a) throw new Error('no-json');
@@ -108,16 +114,6 @@ export function extractJSON(text) {
 }
 
 const str = v => (v === null || v === undefined ? '' : String(v)).trim();
-
-function levelOf(v) {
-	const s = str(v).toLowerCase();
-	if (LEVELS.includes(s)) return s;
-	if (/ana|anadil|native|mother/.test(s)) return 'native';
-	if (/akıcı|akici|fluent|c2/.test(s)) return 'fluent';
-	if (/ileri|advanced|c1/.test(s)) return 'advanced';
-	if (/temel|başlangıç|baslangic|basic|beginner|a1|a2/.test(s)) return 'basic';
-	return 'intermediate';
-}
 
 function cleanItem(type, raw) {
 	const item = {};
@@ -137,23 +133,17 @@ function cleanItem(type, raw) {
 	return item;
 }
 
-// Cevabı bir profile çevirir. Bizim dışa aktarma biçimi ve NextCV biçimi de kabul edilir.
-// "JSON yükle": bizim dosya, NextCV dosyası, tam profil ya da yapay zekâ cevabı biçimindeki her JSON okunur
+// "İçe aktar": bizim dosya, başka bir aracın dışa aktarımı ya da yapay zekâ cevabı; hangi düzende olursa olsun okunur (import.js)
 export function readImport(text, lang) {
-	const obj = extractJSON(text);
-	try {
-		return parseImport(JSON.stringify(obj), lang);
-	} catch (err) {
-		return [profileFromAI(JSON.stringify(obj), { lang })];
-	}
+	return importAny(extractJSON(text), lang);
 }
 
 export function profileFromAI(text, { lang, name, base }) {
 	const obj = extractJSON(text);
-	// Yapıştırılan şey bizim dışa aktarma dosyası ya da NextCV dosyasıysa olduğu gibi al
+	// Yapıştırılan şey bizim dışa aktarma dosyası ya da başka bir aracın dosyasıysa olduğu gibi al
 	if (obj && !obj.personal && !(obj.data && obj.data.personal)) {
 		try {
-			const list = parseImport(JSON.stringify(obj), lang);
+			const list = importAny(obj, lang);
 			if (list.length) return list[0];
 		} catch (err) { /* aşağıda biçim hatası verilir */ }
 	}

@@ -143,56 +143,5 @@ export function sectionHasContent(data, type) {
 	return list.some(item => Object.keys(item).some(k => k !== 'id' && k !== 'current' && (Array.isArray(item[k]) ? item[k].some(b => b && b.trim()) : (typeof item[k] === 'string' && item[k].trim()))));
 }
 
-// Başka bir aracın JSON dışa aktarımını (örn. IEU Forum'daki CV aracı) bizim modele çevirir.
-// Alan adları kullanıcıya ait veridir; yalnızca eşleme yapılır.
-export function importForeign(obj, fallbackLang) {
-	const src = obj && obj.state ? obj.state : obj;
-	if (!src || typeof src !== 'object' || !src.personalInfo) {
-		return null;
-	}
-	const pi = src.personalInfo || {};
-	const sectionMap = { summary: 'summary', experience: 'experience', projects: 'projects', education: 'education', involvement: 'involvement', skills: 'skills', certifications: 'certifications', languages: 'languages', awards: 'awards', hobbies: 'hobbies', references: 'references' };
-	const levelMap = { 'Ana Dil': 'native', Native: 'native', 'Akıcı': 'fluent', Fluent: 'fluent', 'İleri': 'advanced', Advanced: 'advanced', Orta: 'intermediate', Intermediate: 'intermediate', Temel: 'basic', Basic: 'basic', Beginner: 'basic' };
-	const asList = v => (Array.isArray(v) ? v : []);
-	const profile = newProfile(pi.fullName ? `${pi.fullName}` : 'CV', fallbackLang);
-	profile.data.personal = {
-		...emptyPersonal(),
-		name: pi.fullName || '', title: pi.jobTitle || '', location: pi.location || '', email: pi.email || '', phone: pi.phone || '',
-		linkedin: pi.linkedin || '', github: pi.github || '', website: pi.website || '', nationality: pi.nationality || '',
-		license: pi.drivingLicense || '', birthDate: pi.birthDate || '', photo: typeof pi.profilePhoto === 'string' && pi.profilePhoto.startsWith('data:image/') ? pi.profilePhoto : '',
-	};
-	profile.data.summary = src.summary || '';
-	profile.data.hobbies = src.hobbies || '';
-	profile.data.experience = asList(src.experience).map(e => ({ ...emptyItem('experience'), role: e.title || '', company: e.company || '', location: e.location || '', start: e.startDate || '', end: e.endDate || '', current: /present|devam/i.test(e.endDate || ''), bullets: asList(e.bullets).length ? asList(e.bullets) : [''] }));
-	profile.data.projects = asList(src.projects).map(e => ({ ...emptyItem('projects'), name: e.name || '', link: e.link || '', start: e.startDate || e.date || '', end: e.endDate || '', bullets: asList(e.bullets).length ? asList(e.bullets) : [''] }));
-	profile.data.education = asList(src.education).map(e => ({ ...emptyItem('education'), degree: e.degree || '', school: e.institution || '', location: e.location || '', start: e.startDate || '', end: e.year || e.endDate || '', gpa: e.gpa || '', bullets: asList(e.bullets).length ? asList(e.bullets) : [''] }));
-	profile.data.involvement = asList(src.involvement).map(e => ({ ...emptyItem('involvement'), role: e.role || '', org: [e.organization, e.institution].filter(Boolean).join(' · '), start: e.startDate || '', end: e.endDate || '', bullets: asList(e.bullets).length ? asList(e.bullets) : [''] }));
-	profile.data.skills = asList(src.skills).map(e => ({ ...emptyItem('skills'), group: e.category || '', items: e.items || '' }));
-	profile.data.certifications = asList(src.certifications).map(e => ({ ...emptyItem('certifications'), name: e.name || '', issuer: e.issuer || '', date: e.year || e.date || '', link: e.link || '' }));
-	profile.data.languages = asList(src.languages).map(e => ({ ...emptyItem('languages'), name: e.language || e.name || '', level: levelMap[e.proficiency] || levelMap[e.level] || 'intermediate' }));
-	profile.data.awards = asList(src.awards).map(e => ({ ...emptyItem('awards'), name: e.title || e.name || '', issuer: e.issuer || '', date: e.year || e.date || '', note: e.description || '' }));
-	profile.data.references = asList(src.references).map(e => ({ ...emptyItem('references'), name: e.name || '', title: e.title || e.position || '', company: e.company || '', email: e.email || '', phone: e.phone || '' }));
-	const order = asList(src.sections).map(s => ({ type: sectionMap[s.type], visible: s.visible !== false, title: '' })).filter(s => s.type);
-	if (order.length) {
-		profile.data.sections = order;
-	}
-	return normalize(profile, fallbackLang);
-}
-
 // Dışa aktarma biçimi: tek dosyada birden çok profil
 export const EXPORT_FORMAT = 'yu-cv/1';
-
-export function parseImport(text, fallbackLang) {
-	const obj = JSON.parse(text);
-	if (obj && obj.format === EXPORT_FORMAT && Array.isArray(obj.profiles)) {
-		return obj.profiles.map(p => normalize(p, fallbackLang));
-	}
-	const foreign = importForeign(obj, fallbackLang);
-	if (foreign) {
-		return [foreign];
-	}
-	if (obj && obj.data && obj.data.personal) {
-		return [normalize(obj, fallbackLang)];
-	}
-	throw new Error('unknown-format');
-}
