@@ -25,7 +25,7 @@ Activate the plugin in the ACP, rebuild and restart. Then add `/cv` to the navig
 
 ## How it loads
 
-The app itself is not bundled into NodeBB's `nodebb.min.js`. The tiny `forum/cv` page module injects the hashed `cv.<hash>.js` and `.css` only on the `/cv` page. The plugin has no public static directory: its files (bundle, fonts, pdf.js) are served at `/cv-yu/app/<dir>/<file>` to signed-in users only (`401` for guests, `Cache-Control: private, max-age=60 days, immutable`), so the app cannot be run from its files without an account.
+The app itself is not bundled into NodeBB's `nodebb.min.js`. The tiny `forum/cv` page module injects the hashed `cv.<hash>.js` and `.css` only on the `/cv` page. Its files (bundle, fonts, pdf.js) are served to everyone at `/cv-yu/app/<dir>/<file>` (`Cache-Control: public, max-age=60 days, immutable`): building a CV needs no account, and a guest's CV stays on their device. Saving to the account (the API below) still needs one. A forum that wants the tool for members only can gate the `/cv` page itself.
 
 ## API
 
