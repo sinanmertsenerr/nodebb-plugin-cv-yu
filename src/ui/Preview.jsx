@@ -3,14 +3,9 @@
 import { Component } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { buildTemplate } from '../templates/index.jsx';
-import { FINE, themeMetrics } from '../model.js';
+import { FINE, fontStack, themeMetrics } from '../model.js';
 import { A4, layoutColumns } from '../paginate.js';
 
-const FONT_STACK = {
-	inter: '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-	sans: '"Source Sans 3", "Segoe UI", Roboto, sans-serif',
-	serif: '"Source Serif 4", Georgia, "Times New Roman", serif',
-};
 const COL_GAP = 26;
 
 export function themeStyle(theme) {
@@ -18,7 +13,7 @@ export function themeStyle(theme) {
 	return {
 		'--cv-primary': theme.primary,
 		'--cv-accent': theme.accent,
-		'--cv-font': FONT_STACK[theme.font] || FONT_STACK.inter,
+		'--cv-font': fontStack(theme.font),
 		'--cv-size': `${m.sizePx}px`,
 		'--cv-lh': String(m.lineHeight),
 		'--cv-gap': `${m.gapPx}px`,
@@ -158,7 +153,7 @@ export function Preview({ profile, zoom, onLayout, docLang, emptyHint, pageLabel
 	useEffect(() => {
 		if (!document.fonts || !document.fonts.load) return undefined;
 		let alive = true;
-		const family = (FONT_STACK[theme.font] || FONT_STACK.inter).split(',')[0];
+		const family = fontStack(theme.font).split(',')[0];
 		// İtalik burada istenmez: Sade gibi italiksiz CV'de gereksiz dosya inmesin (Harvard'da gerekirse loadingdone yeniden ölçtürür)
 		const faces = ['400', '500', '600', '700'].map(w => document.fonts.load(`${w} 13px ${family}`).catch(() => null));
 		Promise.all(faces).then(() => { if (alive) setFontsTick(t => t + 1); });

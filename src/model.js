@@ -39,6 +39,28 @@ export const DEFAULT_THEME = {
 	photoSize: 'm',
 };
 
+// Yazı tipleri (kendi sunucumuzdan). Eski kayıtlar için anahtarlar sabit: inter, sans (Source Sans 3), serif (Source Serif 4)
+const SANS_FALLBACK = '"Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+const SERIF_FALLBACK = 'Georgia, "Times New Roman", serif';
+export const FONTS = [
+	{ key: 'inter', family: 'Inter', kind: 'sans' },
+	{ key: 'sans', family: 'Source Sans 3', kind: 'sans' },
+	{ key: 'roboto', family: 'Roboto', kind: 'sans' },
+	{ key: 'open-sans', family: 'Open Sans', kind: 'sans' },
+	{ key: 'lato', family: 'Lato', kind: 'sans' },
+	{ key: 'plex', family: 'IBM Plex Sans', kind: 'sans' },
+	{ key: 'serif', family: 'Source Serif 4', kind: 'serif' },
+	{ key: 'merriweather', family: 'Merriweather', kind: 'serif' },
+	{ key: 'lora', family: 'Lora', kind: 'serif' },
+	{ key: 'garamond', family: 'EB Garamond', kind: 'serif' },
+	{ key: 'playfair', family: 'Playfair Display', kind: 'serif' },
+];
+
+export function fontStack(key) {
+	const f = FONTS.find(x => x.key === key) || FONTS[0];
+	return `"${f.family}", ${f.kind === 'serif' ? SERIF_FALLBACK : SANS_FALLBACK}`;
+}
+
 // Hazır Küçük/Orta/Büyük seçeneklerinin ölçüleri (px; A4 sayfa 794 px genişliğinde, 1 px = 0,75 pt)
 export const SIZE = { s: 12, m: 13, l: 14 };
 export const LINE = { s: 1.32, m: 1.45, l: 1.58 };

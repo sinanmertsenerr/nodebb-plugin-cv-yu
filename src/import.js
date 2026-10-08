@@ -3,7 +3,7 @@
 // (sections.x.items), yapay zekâ cevabı ve aynı bilgiyi başka adlarla tutan düzenler.
 // Alan adları karşılaştırılırken küçük harfe çevrilir, Türkçe harfler ve ayraçlar atılır: "Full_Name" = "fullName".
 import { doc } from './i18n.js';
-import { EXPORT_FORMAT, LEVELS, LIST_SECTIONS, SECTION_TYPES, TEXT_SECTIONS, emptyItem, emptyPersonal, newProfile, normalize, sectionHasContent } from './model.js';
+import { EXPORT_FORMAT, FONTS, LEVELS, LIST_SECTIONS, SECTION_TYPES, TEXT_SECTIONS, emptyItem, emptyPersonal, newProfile, normalize, sectionHasContent } from './model.js';
 
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const uniq = list => list.filter((v, i) => v && list.indexOf(v) === i);
@@ -402,8 +402,10 @@ function settingsOf(wrapper, lang) {
 		theme.primary = hex('primaryColor') || NEXTCV_COLORS.primaryColor;
 		theme.accent = hex('accentColor') || NEXTCV_COLORS.accentColor;
 	}
+	// Aynı aile bizde varsa o; yoksa türüne göre Source Serif ya da Source Sans
 	if (typeof src.fontFamily === 'string' && fold(src.fontFamily) !== 'inter') {
-		theme.font = /serif|merriweather|playfair|lora|georgia|garamond|times/i.test(src.fontFamily) && !/sans/i.test(src.fontFamily) ? 'serif' : 'sans';
+		const same = FONTS.find(f => fold(f.family) === fold(src.fontFamily));
+		theme.font = same ? same.key : (/serif|georgia|garamond|times|baskerville/i.test(src.fontFamily) && !/sans/i.test(src.fontFamily) ? 'serif' : 'sans');
 	}
 	[['size', 'fontSize'], ['spacing', 'lineSpacing'], ['margins', 'pageMargins'], ['photoSize', 'photoSize']].forEach(([ours, theirs]) => {
 		if (NEXTCV_SCALE[src[theirs]]) theme[ours] = NEXTCV_SCALE[src[theirs]];

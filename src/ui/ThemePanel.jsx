@@ -1,5 +1,5 @@
 // Görünüm paneli: tek sayfaya sığdırma, renkler, yazı tipi, boyutlar ve ince ayar, bölüm başlığı stili, ikonlar, fotoğraf
-import { FINE, PALETTE, themeMetrics } from '../model.js';
+import { FINE, FONTS, PALETTE, fontStack, themeMetrics } from '../model.js';
 import { Icon } from './icons.jsx';
 
 // İnce ayar değerlerinin ekranda yazılışı: yazı ve aralık punto, kenar boşluğu milimetre (A4'te 1 px = 0,75 pt = 0,2646 mm)
@@ -67,9 +67,11 @@ export function ThemePanel({ t, profile, setTheme, uiLang, pageCount, onFit }) {
 			<div class="cvf cvf--wide">
 				<label class="cvf-label" for={`${uid}-font`}>{t('theme.font')}</label>
 				<select class="cvf-input" id={`${uid}-font`} value={th.font} onChange={e => setTheme({ font: e.currentTarget.value })}>
-					<option value="inter">{t('theme.font.inter')}</option>
-					<option value="sans">{t('theme.font.sans')}</option>
-					<option value="serif">{t('theme.font.serif')}</option>
+					{['sans', 'serif'].map(kind => (
+						<optgroup key={kind} label={t(`theme.font.${kind}Group`)}>
+							{FONTS.filter(f => f.kind === kind).map(f => <option key={f.key} value={f.key} style={{ fontFamily: fontStack(f.key) }}>{f.family}</option>)}
+						</optgroup>
+					))}
 				</select>
 			</div>
 			<Choice t={t} label={t('theme.size')} name={`${uid}-size`} value={fine('sizePx') ? null : th.size} options={sml('size')} onChange={v => setTheme({ size: v, sizePx: undefined })} />

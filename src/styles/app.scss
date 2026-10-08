@@ -21,9 +21,35 @@
     }
 }
 
+// Değişkeni olmayan aile: her ağırlık ayrı dosya (500/600 isteyen yer en yakın kesimi alır)
+@mixin static-face($family, $file, $weights) {
+    @each $weight in $weights {
+        @each $style in (normal, italic) {
+            @each $subset, $range in (latin: $latin, latin-ext: $latin-ext) {
+                @font-face {
+                    font-family: $family;
+                    font-style: $style;
+                    font-weight: $weight;
+                    font-display: swap;
+                    src: url("../fonts/#{$file}-#{$subset}-#{$weight}-#{$style}.woff2") format("woff2");
+                    unicode-range: string.unquote($range);
+                }
+            }
+        }
+    }
+}
+
 @include face("Inter", "inter", $font-weights);
 @include face("Source Sans 3", "source-sans-3", $font-weights);
 @include face("Source Serif 4", "source-serif-4", $font-weights);
+@include face("Roboto", "roboto", $font-weights);
+@include face("Open Sans", "open-sans", $font-weights);
+@include face("IBM Plex Sans", "ibm-plex-sans", $font-weights);
+@include face("Merriweather", "merriweather", $font-weights);
+@include face("Lora", "lora", $font-weights);
+@include face("EB Garamond", "eb-garamond", $font-weights);
+@include face("Playfair Display", "playfair-display", $font-weights);
+@include static-face("Lato", "lato", (400, 700));
 
 // ---------- Düzenleyici tokenları (forumla aynı) ----------
 .cv-yu-page {

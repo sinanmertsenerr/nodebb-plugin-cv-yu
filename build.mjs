@@ -32,22 +32,33 @@ function rangeText(ranges) {
 	return out;
 }
 
+// Değişken kesimli aileler; Lato'nun değişkeni yok, onun 400 ve 700 kesimleri ayrı dosya
 const FONTS = [
 	['inter', '@fontsource-variable/inter'],
 	['source-sans-3', '@fontsource-variable/source-sans-3'],
 	['source-serif-4', '@fontsource-variable/source-serif-4'],
+	['roboto', '@fontsource-variable/roboto'],
+	['open-sans', '@fontsource-variable/open-sans'],
+	['ibm-plex-sans', '@fontsource-variable/ibm-plex-sans'],
+	['merriweather', '@fontsource-variable/merriweather'],
+	['lora', '@fontsource-variable/lora'],
+	['eb-garamond', '@fontsource-variable/eb-garamond'],
+	['playfair-display', '@fontsource-variable/playfair-display'],
+	['lato', '@fontsource/lato'],
 ];
+const FONT_FILE = /^(.+)-(latin|latin-ext)-(wght|400|700)-(normal|italic)\.woff2$/;
 
 async function copyFonts() {
 	await mkdir(fontsDir, { recursive: true });
 	for (const [name, pkg] of FONTS) {
 		const dir = path.join('node_modules', pkg, 'files');
-		const files = (await readdir(dir)).filter(f => /^(.+)-(latin|latin-ext)-wght-(normal|italic)\.woff2$/.test(f));
+		const files = (await readdir(dir)).filter(f => FONT_FILE.test(f));
 		for (const f of files) {
 			const subset = /-latin-ext-/.test(f) ? 'latin-ext' : 'latin';
+			const variable = FONT_FILE.exec(f)[3] === 'wght';
 			const out = await subsetFont(await readFile(path.join(dir, f)), rangeText(FONT_RANGES[subset]), {
 				targetFormat: 'woff2',
-				variationAxes: { wght: { ...FONT_WEIGHTS, default: FONT_WEIGHTS.min } },
+				...(variable ? { variationAxes: { wght: { ...FONT_WEIGHTS, default: FONT_WEIGHTS.min } } } : {}),
 			});
 			await writeFile(path.join(fontsDir, f), out);
 		}

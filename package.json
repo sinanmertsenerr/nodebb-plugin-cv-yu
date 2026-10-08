@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-cv-yu",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "CV builder for NodeBB: a privacy-first résumé editor with real A4 pagination, print-ready PDF output and optional account storage",
   "main": "library.js",
   "repository": {
@@ -41,9 +41,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@fontsource-variable/eb-garamond": "^5.3.0",
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/lora": "^5.3.0",
+    "@fontsource-variable/merriweather": "^5.3.0",
+    "@fontsource-variable/open-sans": "^5.3.0",
+    "@fontsource-variable/playfair-display": "^5.3.0",
+    "@fontsource-variable/roboto": "^5.3.0",
     "@fontsource-variable/source-sans-3": "^5.2.8",
     "@fontsource-variable/source-serif-4": "^5.2.8",
+    "@fontsource/lato": "^5.3.0",
     "bootstrap": "^5.3.8",
     "esbuild": "^0.28.2",
     "eslint": "^10.0.0",
