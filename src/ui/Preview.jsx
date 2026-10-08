@@ -3,31 +3,30 @@
 import { Component } from 'preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { buildTemplate } from '../templates/index.jsx';
-import { A4, MARGINS, layoutColumns } from '../paginate.js';
+import { FINE, themeMetrics } from '../model.js';
+import { A4, layoutColumns } from '../paginate.js';
 
 const FONT_STACK = {
 	inter: '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
 	sans: '"Source Sans 3", "Segoe UI", Roboto, sans-serif',
 	serif: '"Source Serif 4", Georgia, "Times New Roman", serif',
 };
-const SIZE = { s: 12, m: 13, l: 14 };
-const LINE = { s: 1.32, m: 1.45, l: 1.58 };
-const GAP = { s: 12, m: 16, l: 20 };
 const COL_GAP = 26;
 
 export function themeStyle(theme) {
+	const m = themeMetrics(theme);
 	return {
 		'--cv-primary': theme.primary,
 		'--cv-accent': theme.accent,
 		'--cv-font': FONT_STACK[theme.font] || FONT_STACK.inter,
-		'--cv-size': `${SIZE[theme.size] || SIZE.m}px`,
-		'--cv-lh': String(LINE[theme.spacing] || LINE.m),
-		'--cv-gap': `${GAP[theme.spacing] || GAP.m}px`,
+		'--cv-size': `${m.sizePx}px`,
+		'--cv-lh': String(m.lineHeight),
+		'--cv-gap': `${m.gapPx}px`,
 	};
 }
 
 function geometry(theme, columns) {
-	const margin = MARGINS[theme.margins] || MARGINS.m;
+	const margin = themeMetrics(theme).marginPx;
 	const contentW = A4.width - (2 * margin);
 	const widths = {};
 	if (columns.length === 1) {
@@ -57,6 +56,66 @@ function Columns({ built, geo, pageCols }) {
 			))}
 		</div>
 	);
+}
+
+// Gizli ölçüm sayfasındaki blokların yüksekliği (alt boşluk dâhil), sütun sütun
+function measure(host, built) {
+	return built.columns.map((col) => {
+		const el = host.querySelector(`[data-col="${col.key}"]`);
+		const heights = {};
+		if (el) {
+			el.querySelectorAll(':scope > .cv-block').forEach((n) => { heights[n.dataset.block] = n.offsetHeight; });
+		}
+		return { key: col.key, blocks: col.blocks.map(b => ({ key: b.key, height: heights[b.key] || 0, keepWithNext: !!b.keepWithNext })) };
+	});
+}
+
+// "Tek sayfaya sığdır": yazı boyutunu, satır ve bölüm aralığını, kenar boşluğunu birlikte ve gerektiği kadar
+// küçültür. Ölçüm sayfasında dener (ekrandaki sayfa değişmez), tek sayfaya sığan en gevşek ayarı bulur.
+// Döner: { fits, pages, values } ya da ölçülemiyorsa / zaten tek sayfaysa null.
+export function fitOnePage(root, profile) {
+	const host = root && root.querySelector('.cv-page--measure');
+	if (!host || !host.offsetWidth) return null;
+	const built = buildTemplate(profile);
+	const theme = profile.settings.theme;
+	const from = themeMetrics(theme);
+	const at = (t) => {
+		const values = {};
+		Object.keys(FINE).forEach((key) => {
+			const { step, fit } = FINE[key];
+			const to = Math.min(from[key], fit);
+			const stepped = Math.floor(((from[key] + ((to - from[key]) * t)) / step) + 1e-6) * step;
+			values[key] = Math.round(Math.max(to, stepped) * 100) / 100;
+		});
+		return values;
+	};
+	const pagesAt = (values) => {
+		const tried = { ...theme, ...values };
+		const geo = geometry(tried, built.columns);
+		Object.entries(themeStyle(tried)).forEach(([name, value]) => host.parentNode.style.setProperty(name, value));
+		host.style.padding = `${geo.margin}px`;
+		built.columns.forEach((col) => {
+			const el = host.querySelector(`[data-col="${col.key}"]`);
+			if (el) el.style.width = `${geo.widths[col.key]}px`;
+		});
+		return layoutColumns(measure(host, built), geo.contentH).length;
+	};
+	try {
+		if (pagesAt({}) <= 1) return null;
+		const tightest = pagesAt(at(1));
+		if (tightest > 1) return { fits: false, pages: tightest, values: at(1) };
+		let lo = 0;
+		let hi = 1;
+		for (let i = 0; i < 7; i += 1) {
+			const mid = (lo + hi) / 2;
+			if (pagesAt(at(mid)) <= 1) hi = mid;
+			else lo = mid;
+		}
+		return { fits: true, pages: 1, values: at(hi) };
+	} finally {
+		// Ölçüm sayfası eski hâline döner; yeni ayar kaydedilince Preview kendisi çizer
+		pagesAt({});
+	}
 }
 
 // Önizlemede beklenmedik bir hata düzenleyiciyi dondurmasın: mesaj göster, bir sonraki değişiklikte yeniden dene
@@ -89,7 +148,7 @@ export function isEmpty(profile) {
 export function Preview({ profile, zoom, onLayout, docLang, emptyHint, pageLabels }) {
 	const built = useMemo(() => buildTemplate(profile), [profile]);
 	const theme = profile.settings.theme;
-	const geo = useMemo(() => geometry(theme, built.columns), [theme.margins, built]);
+	const geo = useMemo(() => geometry(theme, built.columns), [theme.margins, theme.marginPx, built]);
 	const [pages, setPages] = useState(null);
 	const [fontsTick, setFontsTick] = useState(0);
 	const measureRef = useRef(null);
@@ -112,18 +171,10 @@ export function Preview({ profile, zoom, onLayout, docLang, emptyHint, pageLabel
 	useLayoutEffect(() => {
 		const host = measureRef.current;
 		if (!host) return;
-		const cols = built.columns.map((col) => {
-			const el = host.querySelector(`[data-col="${col.key}"]`);
-			const heights = {};
-			if (el) {
-				el.querySelectorAll(':scope > .cv-block').forEach((n) => { heights[n.dataset.block] = n.offsetHeight; });
-			}
-			return { key: col.key, blocks: col.blocks.map(b => ({ key: b.key, height: heights[b.key] || 0, keepWithNext: !!b.keepWithNext })) };
-		});
-		const next = layoutColumns(cols, geo.contentH);
+		const next = layoutColumns(measure(host, built), geo.contentH);
 		setPages(next);
 		if (onLayout) onLayout(next.length);
-	}, [built, geo, fontsTick, theme.font, theme.size, theme.spacing, theme.titleStyle, theme.icons, theme.photoShape, theme.photoSize]);
+	}, [built, geo, fontsTick, theme.font, theme.size, theme.spacing, theme.sizePx, theme.lineHeight, theme.gapPx, theme.titleStyle, theme.icons, theme.photoShape, theme.photoSize]);
 
 	const scale = zoom === 'fit' ? null : zoom;
 	const sideW = built.columns.length > 1 ? geo.margin + geo.widths[built.columns[0].key] + (COL_GAP / 2) : 0;

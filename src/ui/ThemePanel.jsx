@@ -1,5 +1,14 @@
-// Görünüm paneli: renkler, yazı tipi, boyutlar, bölüm başlığı stili, ikonlar, fotoğraf
-import { PALETTE } from '../model.js';
+// Görünüm paneli: tek sayfaya sığdırma, renkler, yazı tipi, boyutlar ve ince ayar, bölüm başlığı stili, ikonlar, fotoğraf
+import { FINE, PALETTE, themeMetrics } from '../model.js';
+import { Icon } from './icons.jsx';
+
+// İnce ayar değerlerinin ekranda yazılışı: yazı ve aralık punto, kenar boşluğu milimetre (A4'te 1 px = 0,75 pt = 0,2646 mm)
+const FINE_ROWS = [
+	['sizePx', 'theme.size', (v, n) => `${n(v * 0.75, 1)} pt`],
+	['lineHeight', 'theme.spacing', (v, n) => n(v, 2)],
+	['gapPx', 'theme.gap', (v, n) => `${n(v * 0.75, 1)} pt`],
+	['marginPx', 'theme.margins', (v, n) => `${n(v * 0.2646, 0)} mm`],
+];
 
 function Choice({ t, label, name, value, options, onChange }) {
 	return (
@@ -17,12 +26,20 @@ function Choice({ t, label, name, value, options, onChange }) {
 	);
 }
 
-export function ThemePanel({ t, profile, setTheme }) {
+export function ThemePanel({ t, profile, setTheme, uiLang, pageCount, onFit }) {
 	const th = profile.settings.theme;
+	const metrics = themeMetrics(th);
+	const fine = key => Number.isFinite(th[key]);
+	const number = (v, digits) => v.toLocaleString(uiLang, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+	const resetFine = () => setTheme(Object.fromEntries(Object.keys(FINE).map(key => [key, undefined])));
 	const sml = key => [{ value: 's', label: t('theme.s') }, { value: 'm', label: t('theme.m') }, { value: 'l', label: t('theme.l') }].map(o => ({ ...o, name: key }));
 	const uid = profile.id;
 	return (
 		<div class="cv-theme">
+			<div class="cv-fit">
+				<button type="button" class="cvb cvb--secondary" disabled={pageCount <= 1} onClick={onFit}><Icon name="shrink" />{t('theme.fit')}</button>
+				<p class="cvf-hint">{pageCount > 1 ? t('theme.fit.hint', pageCount) : t('theme.fit.ok')}</p>
+			</div>
 			<fieldset class="cv-choice">
 				<legend class="cvf-label">{t('theme.colors')}</legend>
 				<div class="cv-swatches" role="group">
@@ -55,9 +72,22 @@ export function ThemePanel({ t, profile, setTheme }) {
 					<option value="serif">{t('theme.font.serif')}</option>
 				</select>
 			</div>
-			<Choice t={t} label={t('theme.size')} name={`${uid}-size`} value={th.size} options={sml('size')} onChange={v => setTheme({ size: v })} />
-			<Choice t={t} label={t('theme.spacing')} name={`${uid}-spacing`} value={th.spacing} options={sml('spacing')} onChange={v => setTheme({ spacing: v })} />
-			<Choice t={t} label={t('theme.margins')} name={`${uid}-margins`} value={th.margins} options={sml('margins')} onChange={v => setTheme({ margins: v })} />
+			<Choice t={t} label={t('theme.size')} name={`${uid}-size`} value={fine('sizePx') ? null : th.size} options={sml('size')} onChange={v => setTheme({ size: v, sizePx: undefined })} />
+			<Choice t={t} label={t('theme.spacing')} name={`${uid}-spacing`} value={fine('lineHeight') || fine('gapPx') ? null : th.spacing} options={sml('spacing')} onChange={v => setTheme({ spacing: v, lineHeight: undefined, gapPx: undefined })} />
+			<Choice t={t} label={t('theme.margins')} name={`${uid}-margins`} value={fine('marginPx') ? null : th.margins} options={sml('margins')} onChange={v => setTheme({ margins: v, marginPx: undefined })} />
+			{/* İnce ayar: hazır seçeneklerin arasındaki ve dışındaki değerler. Hazır seçeneğe basınca o ölçünün ince ayarı kalkar. */}
+			<fieldset class="cv-choice cv-fine">
+				<legend class="cvf-label">{t('theme.fine')}</legend>
+				{FINE_ROWS.map(([key, label, format]) => (
+					<div class="cv-fine-row" key={key}>
+						<label class="cv-fine-label" for={`${uid}-${key}`}>{t(label)}</label>
+						<output class={`cv-fine-value ${fine(key) ? 'is-set' : ''}`} for={`${uid}-${key}`}>{format(metrics[key], number)}</output>
+						<input class="cv-range" id={`${uid}-${key}`} type="range" min={FINE[key].min} max={FINE[key].max} step={FINE[key].step} value={metrics[key]}
+							aria-valuetext={format(metrics[key], number)} onInput={e => setTheme({ [key]: Number(e.currentTarget.value) })} />
+					</div>
+				))}
+				{Object.keys(FINE).some(fine) ? <button type="button" class="cvb cvb--ghost cvb--sm" onClick={resetFine}>{t('theme.fine.reset')}</button> : <p class="cvf-hint">{t('theme.fine.hint')}</p>}
+			</fieldset>
 			<Choice t={t} label={t('theme.titleStyle')} name={`${uid}-title`} value={th.titleStyle} options={[{ value: 'caps', label: t('theme.caps') }, { value: 'normal', label: t('theme.normal') }]} onChange={v => setTheme({ titleStyle: v })} />
 			<Choice t={t} label={t('theme.photo')} name={`${uid}-photo`} value={th.photoShape} options={[{ value: 'circle', label: t('theme.circle') }, { value: 'rounded', label: t('theme.rounded') }, { value: 'square', label: t('theme.square') }]} onChange={v => setTheme({ photoShape: v })} />
 			<label class="cvf cvf--check">

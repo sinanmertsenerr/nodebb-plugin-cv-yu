@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-cv-yu",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "CV builder for NodeBB: a privacy-first résumé editor with real A4 pagination, print-ready PDF output and optional account storage",
   "main": "library.js",
   "repository": {

@@ -1081,6 +1081,58 @@ select.cvf-input {
     min-width: 0;
 }
 
+// Tek sayfaya sığdır: Görünüm'ün en üstünde, tam genişlik
+.cv-fit {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.cv-fit .cvb:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+// İnce ayar: ad ve değer bir satırda, kaydırıcı altında
+.cv-fine-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 0 8px;
+    margin-top: 8px;
+}
+
+.cv-fine-label {
+    color: var(--cvu-ink2);
+    font-size: 13px;
+}
+
+.cv-fine-value {
+    color: var(--cvu-muted);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.cv-fine-value.is-set {
+    color: var(--cvu-accent);
+    font-weight: 600;
+}
+
+.cv-range {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    accent-color: var(--cvu-accent);
+    cursor: pointer;
+}
+
+.cv-fine .cvb,
+.cv-fine .cvf-hint {
+    margin-top: 6px;
+}
+
 .cv-seg {
     display: flex;
     gap: 3px;

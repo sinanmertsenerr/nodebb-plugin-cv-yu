@@ -110,3 +110,16 @@ test('örnek CV: tam dolu, doğru dilde, kimlikler benzersiz', async () => {
 	assert.equal(new Set(ids).size, ids.length);
 	assert.notEqual(tr.data.experience[0].id, sampleProfile('X', 'tr').data.experience[0].id);
 });
+
+test('ince ayar: hazır seçeneğin yerine geçer, sınır dışı değer kırpılır, bozuk değer atılır', async () => {
+	const M = await load();
+	const base = M.newProfile('X', 'tr');
+	assert.deepEqual(M.themeMetrics(base.settings.theme), { sizePx: 13, lineHeight: 1.45, gapPx: 16, marginPx: 46 });
+	assert.deepEqual(M.themeMetrics({ size: 's', spacing: 'l', margins: 's', sizePx: 11.5, gapPx: 9 }), { sizePx: 11.5, lineHeight: 1.58, gapPx: 9, marginPx: 34 });
+	const n = M.normalize({ settings: { theme: { sizePx: 4, lineHeight: 1.3, gapPx: 'on', marginPx: null } } }, 'tr');
+	assert.equal(n.settings.theme.sizePx, M.FINE.sizePx.min);
+	assert.equal(n.settings.theme.lineHeight, 1.3);
+	assert.equal('gapPx' in n.settings.theme, false);
+	assert.equal('marginPx' in n.settings.theme, false);
+	Object.keys(M.FINE).forEach(key => assert.ok(M.FINE[key].fit >= M.FINE[key].min && M.FINE[key].fit <= M.FINE[key].max, key));
+});

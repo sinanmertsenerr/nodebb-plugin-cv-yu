@@ -6,7 +6,7 @@ import { EXPORT_FORMAT, TEMPLATES, newProfile, normalize, switchTemplate } from 
 import { api, clearLocal, downloadJSON, loadLocal, merge, saveLocal } from './storage.js';
 import { Editor, Field } from './ui/Editor.jsx';
 import { ThemePanel } from './ui/ThemePanel.jsx';
-import { Preview, PreviewBoundary, isEmpty } from './ui/Preview.jsx';
+import { Preview, PreviewBoundary, fitOnePage, isEmpty } from './ui/Preview.jsx';
 import { Icon } from './ui/icons.jsx';
 import { sampleProfile } from './sample.js';
 import { buildPrompt, profileFromAI, readImport } from './ai.js';
@@ -393,6 +393,13 @@ function App({ ctx }) {
 	const update = useCallback(fn => setProfile({ ...active, data: fn(active.data) }), [active, setProfile]);
 	const setSettings = patch => setProfile({ ...active, settings: { ...active.settings, ...patch } });
 	const setTheme = patch => setSettings({ theme: { ...active.settings.theme, ...patch } });
+	// Tek sayfaya sığdır: bulunan ölçüler ince ayar olarak kaydedilir; kişi sonra elle değiştirebilir ya da sıfırlayabilir
+	const fitPage = () => {
+		const fit = fitOnePage(appRef.current, active);
+		if (!fit) return;
+		setTheme(fit.values);
+		notify(fit.fits ? t('theme.fit.done') : t('theme.fit.short', fit.pages));
+	};
 
 	const addProfile = () => {
 		if (Object.keys(state.profiles).length >= MAX_PROFILES) return notify(t('profiles.limit', MAX_PROFILES));
@@ -647,7 +654,7 @@ function App({ ctx }) {
 								<span class="cv-card-title">{t('theme.title')}</span>
 							</button>
 						</div>
-						{openKey === 'theme' ? <div class="cv-card-body" id={`${active.id}-theme`}><ThemePanel t={t} profile={active} setTheme={setTheme} /></div> : null}
+						{openKey === 'theme' ? <div class="cv-card-body" id={`${active.id}-theme`}><ThemePanel t={t} profile={active} setTheme={setTheme} uiLang={uiLang} pageCount={pageCount} onFit={fitPage} /></div> : null}
 					</section>
 					<Editor t={t} profile={active} update={update} openKey={openKey} onToggle={toggleOpen} />
 				</aside>

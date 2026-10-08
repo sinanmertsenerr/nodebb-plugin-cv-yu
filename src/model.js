@@ -21,6 +21,8 @@ export const LIST_SECTIONS = {
 
 export const TEXT_SECTIONS = ['summary', 'hobbies'];
 
+import { MARGINS } from './paginate.js';
+
 export const TEMPLATES = ['sade', 'harvard', 'yan', 'sikisik'];
 export const LEVELS = ['native', 'fluent', 'advanced', 'intermediate', 'basic'];
 
@@ -36,6 +38,31 @@ export const DEFAULT_THEME = {
 	photoShape: 'circle',
 	photoSize: 'm',
 };
+
+// Hazır Küçük/Orta/Büyük seçeneklerinin ölçüleri (px; A4 sayfa 794 px genişliğinde, 1 px = 0,75 pt)
+export const SIZE = { s: 12, m: 13, l: 14 };
+export const LINE = { s: 1.32, m: 1.45, l: 1.58 };
+export const GAP = { s: 12, m: 16, l: 20 };
+
+// İnce ayar: temada bu alanlardan biri doluysa hazır seçeneğin yerine geçer.
+// fit = "Tek sayfaya sığdır"ın inebileceği en sıkı değer; altı elle seçilebilir ama okunması zorlaşır.
+export const FINE = {
+	sizePx: { min: 10, max: 16, step: 0.25, fit: 11 },
+	lineHeight: { min: 1.1, max: 1.8, step: 0.01, fit: 1.22 },
+	gapPx: { min: 2, max: 28, step: 1, fit: 7 },
+	marginPx: { min: 16, max: 80, step: 2, fit: 26 },
+};
+
+// Sayfayı çizen ölçüler: ince ayar varsa o, yoksa hazır seçenek
+export function themeMetrics(theme) {
+	const pick = (key, preset) => (Number.isFinite(theme[key]) ? theme[key] : preset);
+	return {
+		sizePx: pick('sizePx', SIZE[theme.size] || SIZE.m),
+		lineHeight: pick('lineHeight', LINE[theme.spacing] || LINE.m),
+		gapPx: pick('gapPx', GAP[theme.spacing] || GAP.m),
+		marginPx: pick('marginPx', MARGINS[theme.margins] || MARGINS.m),
+	};
+}
 
 // Şablonun kendi görünümü. Harvard siyah-beyaz ve tırnaklı yazı tipiyle gelir, diğerleri renkli.
 // Harvard'a girip çıkarken uygulanır; diğer şablonlar arasında geçişte kişinin ayarları korunur.
@@ -118,6 +145,12 @@ export function normalize(profile, fallbackLang) {
 		},
 		data: { ...base.data },
 	};
+	// İnce ayar yalnız sınırların içindeki sayı olabilir; değilse hazır seçeneğe dönülür
+	Object.keys(FINE).forEach((key) => {
+		const v = out.settings.theme[key];
+		if (Number.isFinite(v)) out.settings.theme[key] = Math.min(FINE[key].max, Math.max(FINE[key].min, v));
+		else delete out.settings.theme[key];
+	});
 	const d = p.data || {};
 	out.data.personal = { ...emptyPersonal(), ...(d.personal || {}) };
 	out.data.summary = typeof d.summary === 'string' ? d.summary : '';
