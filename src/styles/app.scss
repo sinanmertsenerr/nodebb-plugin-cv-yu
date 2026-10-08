@@ -227,8 +227,14 @@
     color: #fff;
 }
 
+// Koyu temada dolu düğme açık maviyle değil, forumun düz mavisiyle (beyaz yazı 4,5:1): koyu zeminde lamba gibi parlamaz
 [data-theme="dark"] .cvb--primary {
-    color: #0b1b33;
+    background-color: var(--yu-solid, #1a73e8);
+    color: #fff;
+}
+
+[data-theme="dark"] .cvb--danger {
+    background-color: #c5221f;
 }
 
 .cvb--primary:hover {
@@ -658,6 +664,11 @@
     border-radius: 999px;
     background-color: #fff4d6;
     color: #7a4b00;
+}
+
+[data-theme="dark"] .cv-pagecount.is-over {
+    background-color: rgba(251, 188, 4, .13);
+    color: #fdd663;
 }
 
 .cv-pagecount svg {
@@ -1119,13 +1130,89 @@ select.cvf-input {
     font-weight: 600;
 }
 
+// Kaydırıcı: her tarayıcıda aynı görünsün diye elle çizilir. Dolu kısım --fill ile gelir (ThemePanel yazar).
 .cv-range {
+    --cv-range-fill: var(--cvu-accent);
+    --cv-range-track: rgba(16, 32, 42, .14);
     grid-column: 1 / -1;
     width: 100%;
     height: 28px;
     margin: 0;
-    accent-color: var(--cvu-accent);
+    padding: 0;
+    background: none;
     cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+// Koyu temada dolu çizgi soluk, yalnız tutamak belirgin: dört çizgi alt alta parlamasın
+[data-theme="dark"] .cv-range {
+    --cv-range-fill: rgba(var(--cvu-accent-rgb), .45);
+    --cv-range-track: rgba(255, 255, 255, .12);
+}
+
+.cv-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--cv-range-fill) var(--fill, 50%), var(--cv-range-track) var(--fill, 50%));
+}
+
+.cv-range::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--cv-range-track);
+}
+
+.cv-range::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--cv-range-fill);
+}
+
+.cv-range::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--cvu-accent);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.cv-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--cvu-accent);
+}
+
+.cv-range:focus-visible {
+    outline: 2px solid rgba(var(--cvu-accent-rgb), .7);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+@media (pointer: coarse) {
+    .cv-range {
+        height: 40px;
+    }
+
+    .cv-range::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        margin-top: -9px;
+    }
+
+    .cv-range::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+[data-theme="dark"] .cvf--check input {
+    accent-color: color-mix(in srgb, var(--cvu-accent) 62%, #2a2b2e);
 }
 
 .cv-fine .cvb,
@@ -1173,6 +1260,13 @@ select.cvf-input {
     box-shadow: inset 0 0 0 1.5px rgba(var(--cvu-accent-rgb), .6);
     color: var(--cvu-accent);
     font-weight: 600;
+}
+
+// Koyu temada seçim ışıkla değil ince çerçeveyle gösterilir (dışa parlama yok)
+[data-theme="dark"] .cv-seg-item.is-on,
+[data-theme="dark"] .cv-seg-btn.is-on {
+    background-color: rgba(var(--cvu-accent-rgb), .12);
+    box-shadow: inset 0 0 0 1px rgba(var(--cvu-accent-rgb), .42);
 }
 
 .cv-seg-item.is-on::before,
@@ -1368,6 +1462,14 @@ select.cvf-input {
     overflow: hidden;
     background: #fff;
     box-shadow: 0 2px 4px rgba(16, 32, 42, .08), 0 12px 32px -12px rgba(16, 32, 42, .3);
+}
+
+// Koyu temada beyaz sayfa ekranın en parlak yüzeyi: ekranda biraz kısılır. Yazdırmada ve PDF'te tam beyaz kalır.
+@media screen {
+    [data-theme="dark"] .cv-page {
+        filter: brightness(.88);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, .06);
+    }
 }
 
 // Sayfa etiketleri (yalnızca ekranda): üstte "1. sayfa / 2", taşan sayfanın altında devam uyarısı

@@ -83,6 +83,7 @@ export function ThemePanel({ t, profile, setTheme, uiLang, pageCount, onFit }) {
 						<label class="cv-fine-label" for={`${uid}-${key}`}>{t(label)}</label>
 						<output class={`cv-fine-value ${fine(key) ? 'is-set' : ''}`} for={`${uid}-${key}`}>{format(metrics[key], number)}</output>
 						<input class="cv-range" id={`${uid}-${key}`} type="range" min={FINE[key].min} max={FINE[key].max} step={FINE[key].step} value={metrics[key]}
+							style={{ '--fill': `${((metrics[key] - FINE[key].min) / (FINE[key].max - FINE[key].min)) * 100}%` }}
 							aria-valuetext={format(metrics[key], number)} onInput={e => setTheme({ [key]: Number(e.currentTarget.value) })} />
 					</div>
 				))}
