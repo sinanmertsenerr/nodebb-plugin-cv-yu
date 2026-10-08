@@ -3,7 +3,7 @@
 // (sections.x.items), yapay zekâ cevabı ve aynı bilgiyi başka adlarla tutan düzenler.
 // Alan adları karşılaştırılırken küçük harfe çevrilir, Türkçe harfler ve ayraçlar atılır: "Full_Name" = "fullName".
 import { doc } from './i18n.js';
-import { EXPORT_FORMAT, FONTS, LEVELS, LIST_SECTIONS, SECTION_TYPES, TEXT_SECTIONS, emptyItem, emptyPersonal, newProfile, normalize, sectionHasContent } from './model.js';
+import { EXPORT_FORMAT, FINE, FONTS, LEVELS, LIST_SECTIONS, SECTION_TYPES, SIZE, TEXT_SECTIONS, emptyItem, emptyPersonal, newProfile, normalize, sectionHasContent } from './model.js';
 
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const uniq = list => list.filter((v, i) => v && list.indexOf(v) === i);
@@ -386,7 +386,7 @@ function personOf(boxes, linkLists) {
 
 // NextCV görünüm ayarlarının bizdeki karşılıkları
 const NEXTCV_TEMPLATES = { classic: 'sade', minimalist: 'sade', creative: 'sade', compact: 'sikisik', modern: 'yan', twoColumn: 'yan', academic: 'yan' };
-const NEXTCV_SCALE = { small: 's', compact: 's', narrow: 's', sm: 's', medium: 'm', normal: 'm', md: 'm', large: 'l', relaxed: 'l', wide: 'l', lg: 'l' };
+const NEXTCV_SCALE = { small: 's', compact: 's', narrow: 's', tight: 's', sm: 's', medium: 'm', normal: 'm', md: 'm', large: 'l', relaxed: 'l', wide: 'l', loose: 'l', lg: 'l' };
 const NEXTCV_COLORS = { primaryColor: '#1a1a2e', accentColor: '#4a6cf7' };
 
 function settingsOf(wrapper, lang) {
@@ -407,10 +407,17 @@ function settingsOf(wrapper, lang) {
 		const same = FONTS.find(f => fold(f.family) === fold(src.fontFamily));
 		theme.font = same ? same.key : (/serif|georgia|garamond|times|baskerville/i.test(src.fontFamily) && !/sans/i.test(src.fontFamily) ? 'serif' : 'sans');
 	}
-	[['size', 'fontSize'], ['spacing', 'lineSpacing'], ['margins', 'pageMargins'], ['photoSize', 'photoSize']].forEach(([ours, theirs]) => {
+	[['size', 'fontSize'], ['spacing', 'lineSpacing'], ['gap', 'sectionSpacing'], ['margins', 'pageMargins'], ['photoSize', 'photoSize']].forEach(([ours, theirs]) => {
 		if (NEXTCV_SCALE[src[theirs]]) theme[ours] = NEXTCV_SCALE[src[theirs]];
 	});
-	if (typeof src.sectionTitleStyle === 'string') theme.titleStyle = src.sectionTitleStyle === 'uppercase' ? 'caps' : 'normal';
+	if (typeof src.sectionTitleStyle === 'string') theme.titleStyle = { uppercase: 'caps', capitalize: 'capitalize' }[src.sectionTitleStyle] || 'normal';
+	if (typeof src.photoVisible === 'boolean') theme.photo = src.photoVisible;
+	// İnce ayarlar: NextCV'nin sayfası da 794 px; yazı ölçeği onun Orta'sına (1) göre, bizim Orta'ya (12 px) uyarlanır
+	const num = key => (Number.isFinite(src[key]) ? src[key] : null);
+	if (num('fontScaleOverride') !== null) theme.sizePx = Math.round((SIZE.m * num('fontScaleOverride')) / FINE.sizePx.step) * FINE.sizePx.step;
+	if (num('lineHeightOverride') !== null) theme.lineHeight = num('lineHeightOverride');
+	if (num('pageMarginsOverride') !== null) theme.marginPx = num('pageMarginsOverride');
+	if (num('sectionSpacingOverride') !== null) theme.gapPx = num('sectionSpacingOverride');
 	if (typeof src.showIcons === 'boolean') theme.icons = src.showIcons;
 	if (['circle', 'rounded', 'square'].includes(src.photoShape)) theme.photoShape = src.photoShape;
 	settings.theme = theme;

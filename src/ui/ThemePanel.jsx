@@ -75,7 +75,8 @@ export function ThemePanel({ t, profile, setTheme, uiLang, pageCount, onFit }) {
 				</select>
 			</div>
 			<Choice t={t} label={t('theme.size')} name={`${uid}-size`} value={fine('sizePx') ? null : th.size} options={sml('size')} onChange={v => setTheme({ size: v, sizePx: undefined })} />
-			<Choice t={t} label={t('theme.spacing')} name={`${uid}-spacing`} value={fine('lineHeight') || fine('gapPx') ? null : th.spacing} options={sml('spacing')} onChange={v => setTheme({ spacing: v, lineHeight: undefined, gapPx: undefined })} />
+			<Choice t={t} label={t('theme.spacing')} name={`${uid}-spacing`} value={fine('lineHeight') ? null : th.spacing} options={sml('spacing')} onChange={v => setTheme({ spacing: v, lineHeight: undefined })} />
+			<Choice t={t} label={t('theme.gap')} name={`${uid}-gap`} value={fine('gapPx') ? null : th.gap} options={sml('gap')} onChange={v => setTheme({ gap: v, gapPx: undefined })} />
 			<Choice t={t} label={t('theme.margins')} name={`${uid}-margins`} value={fine('marginPx') ? null : th.margins} options={sml('margins')} onChange={v => setTheme({ margins: v, marginPx: undefined })} />
 			{/* İnce ayar: hazır seçeneklerin arasındaki ve dışındaki değerler. Hazır seçeneğe basınca o ölçünün ince ayarı kalkar. */}
 			<fieldset class="cv-choice cv-fine">
@@ -91,8 +92,20 @@ export function ThemePanel({ t, profile, setTheme, uiLang, pageCount, onFit }) {
 				))}
 				{Object.keys(FINE).some(fine) ? <button type="button" class="cvb cvb--ghost cvb--sm" onClick={resetFine}>{t('theme.fine.reset')}</button> : <p class="cvf-hint">{t('theme.fine.hint')}</p>}
 			</fieldset>
-			<Choice t={t} label={t('theme.titleStyle')} name={`${uid}-title`} value={th.titleStyle} options={[{ value: 'caps', label: t('theme.caps') }, { value: 'normal', label: t('theme.normal') }]} onChange={v => setTheme({ titleStyle: v })} />
-			<Choice t={t} label={t('theme.photo')} name={`${uid}-photo`} value={th.photoShape} options={[{ value: 'circle', label: t('theme.circle') }, { value: 'rounded', label: t('theme.rounded') }, { value: 'square', label: t('theme.square') }]} onChange={v => setTheme({ photoShape: v })} />
+			<Choice t={t} label={t('theme.titleStyle')} name={`${uid}-title`} value={th.titleStyle} options={[{ value: 'caps', label: t('theme.caps') }, { value: 'capitalize', label: t('theme.capitalize') }, { value: 'normal', label: t('theme.normal') }]} onChange={v => setTheme({ titleStyle: v })} />
+			<fieldset class="cv-choice">
+				<legend class="cvf-label">{t('theme.photo')}</legend>
+				<label class="cvf cvf--check">
+					<input type="checkbox" checked={th.photo !== false} onChange={e => setTheme({ photo: e.currentTarget.checked })} />
+					<span>{t('theme.photo.show')}</span>
+				</label>
+				{th.photo !== false ? (
+					<>
+						<Choice t={t} label={t('theme.photo.size')} name={`${uid}-photo-size`} value={th.photoSize} options={sml('photoSize')} onChange={v => setTheme({ photoSize: v })} />
+						<Choice t={t} label={t('theme.photo.shape')} name={`${uid}-photo`} value={th.photoShape} options={[{ value: 'circle', label: t('theme.circle') }, { value: 'rounded', label: t('theme.rounded') }, { value: 'square', label: t('theme.square') }]} onChange={v => setTheme({ photoShape: v })} />
+					</>
+				) : null}
+			</fieldset>
 			<label class="cvf cvf--check">
 				<input type="checkbox" checked={!!th.icons} onChange={e => setTheme({ icons: e.currentTarget.checked })} />
 				<span>{t('theme.icons')}</span>

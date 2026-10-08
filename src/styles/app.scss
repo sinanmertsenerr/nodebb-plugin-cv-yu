@@ -1696,6 +1696,10 @@ select.cvf-input {
     text-transform: uppercase;
 }
 
+.cv-h2--capitalize {
+    text-transform: capitalize;
+}
+
 .cv-entry-row {
     display: flex;
     align-items: baseline;

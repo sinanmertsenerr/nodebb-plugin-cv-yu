@@ -71,7 +71,7 @@ function ContactLine({ items, icons, cls }) {
 }
 
 function Photo({ personal, theme }) {
-	if (!personal.photo) return null;
+	if (!personal.photo || theme.photo === false) return null;
 	return <img class={`cv-photo cv-photo--${theme.photoShape} cv-photo--${theme.photoSize}`} src={personal.photo} alt="" />;
 }
 
@@ -228,7 +228,7 @@ function headerBlock(profile, lang, variant) {
 	return {
 		key: 'header',
 		render: () => (
-			<header class={`cv-header cv-header--${variant} ${personal.photo && variant !== 'yan' ? 'cv-header--photo' : ''}`}>
+			<header class={`cv-header cv-header--${variant} ${personal.photo && theme.photo !== false && variant !== 'yan' ? 'cv-header--photo' : ''}`}>
 				{variant !== 'harvard' && variant !== 'yan' ? <Photo personal={personal} theme={theme} /> : null}
 				<div class="cv-header-text">
 					<h1 class="cv-name">{trim(personal.name) || ' '}</h1>

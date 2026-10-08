@@ -62,7 +62,12 @@ test('NextCV dışa aktarma dosyası (cvData sarmalayıcısı) eksiksiz okunur',
 	// Görünüm: şablon ve ölçüler taşınır, dokunulmamış NextCV renkleri taşınmaz
 	assert.equal(p.settings.template, 'sikisik');
 	const th = p.settings.theme;
-	assert.deepEqual([th.size, th.spacing, th.margins, th.titleStyle, th.icons, th.photoShape, th.photoSize], ['s', 'l', 's', 'normal', false, 'rounded', 'l']);
+	assert.deepEqual([th.size, th.spacing, th.margins, th.titleStyle, th.icons, th.photoShape, th.photoSize], ['s', 'l', 's', 'capitalize', false, 'rounded', 'l']);
+	// İnce ayarlar ve fotoğraf görünürlüğü de gelir; bölüm aralığı ayrı hazır seçenek
+	const tuned = nextcv();
+	Object.assign(tuned.appSettings.theme, { fontScaleOverride: 0.9, lineHeightOverride: 1.2, pageMarginsOverride: 24, sectionSpacingOverride: 4, sectionSpacing: 'tight', photoVisible: false });
+	const tt = I.readImport(JSON.stringify(tuned), 'tr')[0].settings.theme;
+	assert.deepEqual([tt.sizePx, tt.lineHeight, tt.marginPx, tt.gapPx, tt.gap, tt.photo], [10.75, 1.2, 24, 4, 's', false]);
 	assert.deepEqual([th.primary, th.accent], [I.DEFAULT_THEME.primary, I.DEFAULT_THEME.accent]);
 	const tinted = nextcv();
 	tinted.appSettings.theme.accentColor = '#FF0000';

@@ -32,9 +32,11 @@ export const DEFAULT_THEME = {
 	font: 'inter',
 	size: 'm',
 	spacing: 'm',
+	gap: 'm',
 	margins: 'm',
 	titleStyle: 'caps',
 	icons: true,
+	photo: true,
 	photoShape: 'circle',
 	photoSize: 'm',
 };
@@ -70,10 +72,10 @@ export const GAP = { s: 12, m: 16, l: 20 };
 // İnce ayar: temada bu alanlardan biri doluysa hazır seçeneğin yerine geçer.
 // fit = "Tek sayfaya sığdır"ın inebileceği en sıkı değer; altı elle seçilebilir ama okunması zorlaşır.
 export const FINE = {
-	sizePx: { min: 10, max: 16, step: 0.25, fit: 11 },
-	lineHeight: { min: 1.1, max: 1.8, step: 0.01, fit: 1.22 },
-	gapPx: { min: 2, max: 28, step: 1, fit: 7 },
-	marginPx: { min: 16, max: 80, step: 2, fit: 26 },
+	sizePx: { min: 8.5, max: 16, step: 0.25, fit: 9.5 },
+	lineHeight: { min: 1.05, max: 1.9, step: 0.01, fit: 1.15 },
+	gapPx: { min: 0, max: 28, step: 1, fit: 3 },
+	marginPx: { min: 14, max: 90, step: 2, fit: 20 },
 };
 
 // Sayfayı çizen ölçüler: ince ayar varsa o, yoksa hazır seçenek
@@ -82,7 +84,7 @@ export function themeMetrics(theme) {
 	return {
 		sizePx: pick('sizePx', SIZE[theme.size] || SIZE.m),
 		lineHeight: pick('lineHeight', LINE[theme.spacing] || LINE.m),
-		gapPx: pick('gapPx', GAP[theme.spacing] || GAP.m),
+		gapPx: pick('gapPx', GAP[theme.gap] || GAP.m),
 		marginPx: pick('marginPx', MARGINS[theme.margins] || MARGINS.m),
 	};
 }
