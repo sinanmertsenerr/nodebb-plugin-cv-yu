@@ -1440,6 +1440,12 @@ select.cvf-input {
     font-size: var(--cv-size);
     line-height: var(--cv-lh);
     -webkit-font-smoothing: antialiased;
+    // PDF metni doğru okunsun (ATS, kopyala-yapıştır): yazı tipinin değişik glifleri kapalı. Safari'nin PDF'i,
+    // küçültülmüş yazı tipindeki bu glifleri harfe geri çeviremiyor: sabit genişlikli rakamlar tarihi
+    // "NisSTUTV" yapıyor, Inter'in büyük harf yanındaki "(", "+", "–" biçimleri "0", "/", "W" oluyor.
+    font-variant-ligatures: none;
+    font-variant-numeric: normal;
+    font-feature-settings: "calt" 0, "liga" 0, "clig" 0, "tnum" 0, "case" 0;
 
     // Forumun (Bootstrap) başlık/paragraf kuralları CV'ye sızmasın: ölçüm ve baskı her sitede aynı olsun
     *,
@@ -1532,9 +1538,15 @@ select.cvf-input {
     padding-bottom: var(--cv-gap);
 }
 
-// Başlık ile ilk öğe arası dar, öğeler arası orta
+// Başlık ile ilk öğe arası dar, öğeler arası orta. Başlığın üstünde ek boşluk: bölüm sonu, öğeler arasından
+// belirgin olsun, göz bölümleri ayırsın (sayfanın ilk bloğunda yok)
 .cv-block:has(> .cv-h2) {
+    padding-top: calc(var(--cv-gap) * .5);
     padding-bottom: calc(var(--cv-gap) * .45);
+}
+
+.cv-col > .cv-block:first-child:has(> .cv-h2) {
+    padding-top: 0;
 }
 
 // Boş bölümün başlığı: altında bir sonraki bölüme kadar normal boşluk
@@ -1633,13 +1645,14 @@ select.cvf-input {
     line-height: 1.2;
     border-bottom: 1.5px solid var(--cv-accent);
     color: var(--cv-primary);
-    font-size: 1em;
+    font-size: 1.12em;
     font-weight: 700;
     letter-spacing: 0;
 }
 
+// Büyük harfli başlık gövde yazısından küçük kalmasın: sıkıştırılmış CV'de 7 pt'ye iniyor, taranması zorlaşıyordu
 .cv-h2--caps {
-    font-size: .86em;
+    font-size: 1em;
     letter-spacing: .09em;
     text-transform: uppercase;
 }
@@ -1667,7 +1680,6 @@ select.cvf-input {
     flex-shrink: 0;
     color: var(--cv-muted);
     font-size: .9em;
-    font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 
