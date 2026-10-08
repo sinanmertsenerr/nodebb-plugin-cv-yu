@@ -345,10 +345,14 @@
     z-index: 1060;
     min-width: 260px;
     padding: 6px;
-    border: 1px solid var(--cvu-line);
     border-radius: 12px;
     background-color: var(--bs-body-bg);
-    box-shadow: 0 16px 40px -12px rgba(16, 32, 42, .35);
+    box-shadow: 0 0 0 1px rgba(16, 32, 42, .06), 0 16px 40px -12px rgba(16, 32, 42, .35);
+}
+
+// Koyu zeminde gölge görünmez: menü ince çerçeveyle ayrılır
+[data-theme="dark"] .cv-menu {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .12);
 }
 
 // Yapay zekâ / İçe aktar / Dışa aktar: masaüstünde üst çubukta Yazdır'ın hemen solunda, telefonda düzenleme sekmesinin üstünde
@@ -880,8 +884,8 @@ select.cvf-input {
     padding: 0 2px 6px;
     border-top-color: transparent;
     border-radius: 12px;
+    // Açık bölüm yalnız zemin tonuyla belli olur (yan şerit yok)
     background-color: var(--cvu-hover);
-    box-shadow: inset 3px 0 0 var(--cvu-accent);
 }
 
 .cv-card:has(> .cv-card-body) > .cv-card-head .cv-card-title {
@@ -1284,8 +1288,14 @@ select.cvf-input {
 .cv-seg-btn.is-on {
     background-color: rgba(var(--cvu-accent-rgb), .16);
     box-shadow: inset 0 0 0 1.5px rgba(var(--cvu-accent-rgb), .6);
-    color: var(--cvu-accent);
+    // Açık mavi zeminde vurgu mavisi 3.9:1 kalıyordu; koyulaştırılmış hâli 4.5:1'in üstünde
+    color: color-mix(in srgb, var(--cvu-accent) 72%, #000);
     font-weight: 600;
+}
+
+[data-theme="dark"] .cv-seg-item.is-on,
+[data-theme="dark"] .cv-seg-btn.is-on {
+    color: var(--cvu-accent);
 }
 
 // Koyu temada seçim ışıkla değil ince çerçeveyle gösterilir (dışa parlama yok)
@@ -1457,10 +1467,14 @@ select.cvf-input {
 }
 
 // ---------- CV sayfası (basılı tasarım; tema fark etmez) ----------
+// Gri kademeli metin (NextCV ile aynı aile): ad en koyu, başlık satırları koyu, gövde orta, ikincil bilgi açık.
+// Hepsi beyazda en az 4.5:1. Renk yalnız bölüm başlığında ve simgelerde.
 .cv-pages {
-    --cv-ink: #1b1f23;
-    --cv-ink2: #3f4852;
-    --cv-muted: #5c6670;
+    --cv-strong: #111827;
+    --cv-head: #1f2937;
+    --cv-ink: #374151;
+    --cv-ink2: #4b5563;
+    --cv-muted: #4b5563;
     color: var(--cv-ink);
     font-family: var(--cv-font);
     font-size: var(--cv-size);
@@ -1602,29 +1616,29 @@ select.cvf-input {
 
 .cv-name {
     margin: 0;
-    color: var(--cv-primary);
-    font-size: 2.15em;
+    color: var(--cv-strong);
+    font-size: 2.1em;
     font-weight: 700;
-    line-height: 1.08;
-    letter-spacing: -.015em;
+    line-height: 1.1;
+    letter-spacing: -.025em;
 }
 
 .cv-title {
-    margin: 3px 0 0;
+    margin: 2px 0 0;
     color: var(--cv-ink2);
-    font-size: 1.1em;
-    font-weight: 500;
+    font-size: 1.14em;
+    font-weight: 400;
 }
 
 .cv-contact {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 14px;
-    margin: 9px 0 0;
+    gap: 3px 16px;
+    margin: 6px 0 0;
     padding: 0;
     list-style: none;
     color: var(--cv-ink2);
-    font-size: .93em;
+    font-size: .95em;
 }
 
 .cv-contact li {
@@ -1665,21 +1679,20 @@ select.cvf-input {
     display: block;
 }
 
+// Bölüm başlığı gövdeden belirgin büyük (1.24×), altında ince tek çizgi: göz bölümleri buradan tarar
 .cv-h2 {
     margin: 0;
-    padding-bottom: 3px;
+    padding-bottom: 4px;
     line-height: 1.2;
-    border-bottom: 1.5px solid var(--cv-accent);
+    border-bottom: 1px solid var(--cv-primary);
     color: var(--cv-primary);
-    font-size: 1.12em;
+    font-size: 1.24em;
     font-weight: 700;
-    letter-spacing: 0;
+    letter-spacing: .02em;
 }
 
-// Büyük harfli başlık gövde yazısından küçük kalmasın: sıkıştırılmış CV'de 7 pt'ye iniyor, taranması zorlaşıyordu
 .cv-h2--caps {
-    font-size: 1em;
-    letter-spacing: .09em;
+    letter-spacing: .05em;
     text-transform: uppercase;
 }
 
@@ -1692,40 +1705,43 @@ select.cvf-input {
 
 .cv-entry-head {
     min-width: 0;
-    font-weight: 600;
+    color: var(--cv-head);
+    font-size: 1.1em;
+    font-weight: 700;
 }
 
 .cv-entry-link {
     margin-left: 8px;
-    color: var(--cv-accent) !important;
+    color: var(--cv-ink2) !important;
     font-weight: 400;
-    font-size: .92em;
+    font-size: .86em;
 }
 
 .cv-entry-right {
     flex-shrink: 0;
     color: var(--cv-muted);
-    font-size: .9em;
+    font-size: .95em;
     white-space: nowrap;
 }
 
 .cv-entry-sub {
     color: var(--cv-ink2);
-    font-size: .95em;
 }
 
+// Madde işareti metin renginde, küçük nokta: vurgu başlıklarda kalsın, satırlar sakin dursun
 .cv-bullets {
     margin: 3px 0 0;
-    padding-left: 1.15em;
+    padding-left: 1em;
 }
 
 .cv-bullets li {
-    margin: 1px 0;
-    padding-left: .1em;
+    margin: 2px 0;
+    padding-left: .15em;
 }
 
 .cv-bullets li::marker {
-    color: var(--cv-accent);
+    color: var(--cv-ink);
+    font-size: .9em;
 }
 
 .cv-text {
@@ -1745,7 +1761,8 @@ select.cvf-input {
 
 .cv-skill dt {
     flex: none;
-    font-weight: 600;
+    color: var(--cv-head);
+    font-weight: 700;
 }
 
 .cv-skill dt::after {
@@ -1767,7 +1784,9 @@ select.cvf-input {
 }
 
 .cv-lang-name {
-    font-weight: 600;
+    color: var(--cv-head);
+    font-size: 1.05em;
+    font-weight: 500;
 }
 
 .cv-lang-level {
@@ -1775,9 +1794,9 @@ select.cvf-input {
     margin-left: 6px;
     padding: 0 .55em;
     border-radius: 999px;
-    background-color: color-mix(in srgb, var(--cv-accent) 11%, #fff);
+    background-color: color-mix(in srgb, var(--cv-accent) 8%, #fff);
     color: color-mix(in srgb, var(--cv-accent) 80%, #000);
-    font-size: .82em;
+    font-size: .86em;
     font-weight: 500;
     line-height: 1.55;
 }
@@ -1797,13 +1816,14 @@ select.cvf-input {
 
 .cv-photo {
     flex: none;
-    width: 92px;
-    height: 92px;
+    width: 64px;
+    height: 64px;
     object-fit: cover;
 }
 
-.cv-photo--s { width: 72px; height: 72px; }
-.cv-photo--l { width: 114px; height: 114px; }
+// Fotoğraf adın yanında küçük kalır: göz önce ada gitsin
+.cv-photo--s { width: 48px; height: 48px; }
+.cv-photo--l { width: 84px; height: 84px; }
 .cv-photo--circle { border-radius: 50%; }
 .cv-photo--rounded { border-radius: 12px; }
 .cv-photo--square { border-radius: 0; }
@@ -1841,9 +1861,9 @@ select.cvf-input {
 // Fotoğraf varsa foto solda, yazılar sola yaslı, altında ince çizgi: daha az yer kaplar, göz soldan başlar
 .cv-header--sade.cv-header--photo {
     flex-direction: row;
-    gap: 22px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #d3d8dd;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #d1d5db;
     text-align: left;
 }
 

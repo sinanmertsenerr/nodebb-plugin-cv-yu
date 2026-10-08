@@ -62,8 +62,9 @@ export function fontStack(key) {
 }
 
 // Hazır Küçük/Orta/Büyük seçeneklerinin ölçüleri (px; A4 sayfa 794 px genişliğinde, 1 px = 0,75 pt)
-export const SIZE = { s: 12, m: 13, l: 14 };
-export const LINE = { s: 1.32, m: 1.45, l: 1.58 };
+// Orta: 12 px = 9 pt gövde, 1,5 satır aralığı (NextCV'nin oranları, okunur alt sınırın üstünde)
+export const SIZE = { s: 11, m: 12, l: 13 };
+export const LINE = { s: 1.32, m: 1.5, l: 1.65 };
 export const GAP = { s: 12, m: 16, l: 20 };
 
 // İnce ayar: temada bu alanlardan biri doluysa hazır seçeneğin yerine geçer.
