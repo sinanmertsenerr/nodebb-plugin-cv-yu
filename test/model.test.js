@@ -121,5 +121,5 @@ test('ince ayar: hazır seçeneğin yerine geçer, sınır dışı değer kırp�
 	assert.equal(n.settings.theme.lineHeight, 1.3);
 	assert.equal('gapPx' in n.settings.theme, false);
 	assert.equal('marginPx' in n.settings.theme, false);
-	Object.keys(M.FINE).forEach(key => assert.ok(M.FINE[key].fit >= M.FINE[key].min && M.FINE[key].fit <= M.FINE[key].max, key));
+	Object.keys(M.FINE).forEach(key => assert.ok(M.FINE[key].fit >= M.FINE[key].min && M.FINE[key].fit <= M.FINE[key].soft && M.FINE[key].soft <= M.FINE[key].max, key));
 });

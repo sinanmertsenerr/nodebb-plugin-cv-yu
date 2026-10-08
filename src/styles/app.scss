@@ -1513,7 +1513,7 @@ select.cvf-input {
 // Koyu temada beyaz sayfa ekranın en parlak yüzeyi: ekranda biraz kısılır. Yazdırmada ve PDF'te tam beyaz kalır.
 @media screen {
     [data-theme="dark"] .cv-page {
-        filter: brightness(.88);
+        filter: brightness(.95);
         box-shadow: 0 0 0 1px rgba(255, 255, 255, .06);
     }
 }
@@ -1581,8 +1581,8 @@ select.cvf-input {
 // Başlık ile ilk öğe arası dar, öğeler arası orta. Başlığın üstünde ek boşluk: bölüm sonu, öğeler arasından
 // belirgin olsun, göz bölümleri ayırsın (sayfanın ilk bloğunda yok)
 .cv-block:has(> .cv-h2) {
-    padding-top: calc(var(--cv-gap) * .5);
-    padding-bottom: calc(var(--cv-gap) * .45);
+    padding-top: calc(var(--cv-gap) * .4);
+    padding-bottom: calc(var(--cv-gap) * .4);
 }
 
 .cv-col > .cv-block:first-child:has(> .cv-h2) {
@@ -1617,7 +1617,7 @@ select.cvf-input {
 .cv-name {
     margin: 0;
     color: var(--cv-strong);
-    font-size: 2.1em;
+    font-size: 1.95em;
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: -.025em;
@@ -1633,12 +1633,12 @@ select.cvf-input {
 .cv-contact {
     display: flex;
     flex-wrap: wrap;
-    gap: 3px 16px;
-    margin: 6px 0 0;
+    gap: 2px 12px;
+    margin: 5px 0 0;
     padding: 0;
     list-style: none;
     color: var(--cv-ink2);
-    font-size: .95em;
+    font-size: .92em;
 }
 
 .cv-contact li {
@@ -1679,20 +1679,22 @@ select.cvf-input {
     display: block;
 }
 
-// Bölüm başlığı gövdeden belirgin büyük (1.24×), altında ince tek çizgi: göz bölümleri buradan tarar
+// Bölüm başlığı gövdeden belirgin büyük, altında ana rengin açık tonunda ince çizgi: göz bölümleri buradan
+// tarar, çizgi metinle yarışmaz
 .cv-h2 {
     margin: 0;
-    padding-bottom: 4px;
+    padding-bottom: 3px;
     line-height: 1.2;
-    border-bottom: 1px solid var(--cv-primary);
+    border-bottom: 1px solid color-mix(in srgb, var(--cv-primary) 35%, #fff);
     color: var(--cv-primary);
-    font-size: 1.24em;
+    font-size: 1.16em;
     font-weight: 700;
-    letter-spacing: .02em;
+    letter-spacing: .01em;
 }
 
 .cv-h2--caps {
-    letter-spacing: .05em;
+    font-size: 1.08em;
+    letter-spacing: .07em;
     text-transform: uppercase;
 }
 
@@ -1820,14 +1822,14 @@ select.cvf-input {
 
 .cv-photo {
     flex: none;
-    width: 64px;
-    height: 64px;
+    width: 52px;
+    height: 52px;
     object-fit: cover;
 }
 
 // Fotoğraf adın yanında küçük kalır: göz önce ada gitsin
-.cv-photo--s { width: 48px; height: 48px; }
-.cv-photo--l { width: 84px; height: 84px; }
+.cv-photo--s { width: 40px; height: 40px; }
+.cv-photo--l { width: 68px; height: 68px; }
 .cv-photo--circle { border-radius: 50%; }
 .cv-photo--rounded { border-radius: 12px; }
 .cv-photo--square { border-radius: 0; }
@@ -1865,9 +1867,9 @@ select.cvf-input {
 // Fotoğraf varsa foto solda, yazılar sola yaslı, altında ince çizgi: daha az yer kaplar, göz soldan başlar
 .cv-header--sade.cv-header--photo {
     flex-direction: row;
-    gap: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #d1d5db;
+    gap: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
     text-align: left;
 }
 
@@ -1913,6 +1915,7 @@ select.cvf-input {
 
 .cv-pages--harvard .cv-h2 {
     padding-bottom: 2px;
+    border-bottom-color: var(--cv-ink);
     border-bottom-width: 1px;
     letter-spacing: .03em;
 }

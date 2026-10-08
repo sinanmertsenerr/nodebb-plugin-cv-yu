@@ -72,10 +72,11 @@ export const GAP = { s: 12, m: 16, l: 20 };
 // İnce ayar: temada bu alanlardan biri doluysa hazır seçeneğin yerine geçer.
 // fit = "Tek sayfaya sığdır"ın inebileceği en sıkı değer; altı elle seçilebilir ama okunması zorlaşır.
 export const FINE = {
-	sizePx: { min: 8.5, max: 16, step: 0.25, fit: 9.5 },
-	lineHeight: { min: 1.05, max: 1.9, step: 0.01, fit: 1.15 },
-	gapPx: { min: 0, max: 28, step: 1, fit: 3 },
-	marginPx: { min: 14, max: 90, step: 2, fit: 20 },
+// soft = "Tek sayfaya sığdır"ın önce indiği rahat değer (yazı NextCV'nin Orta'sı kadar); fit = en son çare
+	sizePx: { min: 8.5, max: 16, step: 0.25, soft: 10.5, fit: 9 },
+	lineHeight: { min: 1.05, max: 1.9, step: 0.01, soft: 1.3, fit: 1.12 },
+	gapPx: { min: 0, max: 28, step: 1, soft: 8, fit: 2 },
+	marginPx: { min: 14, max: 90, step: 2, soft: 30, fit: 18 },
 };
 
 // Sayfayı çizen ölçüler: ince ayar varsa o, yoksa hazır seçenek

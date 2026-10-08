@@ -65,22 +65,30 @@ function measure(host, built) {
 	});
 }
 
-// "Tek sayfaya sığdır": yazı boyutunu, satır ve bölüm aralığını, kenar boşluğunu birlikte ve gerektiği kadar
-// küçültür. Ölçüm sayfasında dener (ekrandaki sayfa değişmez), tek sayfaya sığan en gevşek ayarı bulur.
-// Döner: { fits, pages, values } ya da ölçülemiyorsa / zaten tek sayfaysa null.
+// "Tek sayfaya sığdır": üç adımda, gerektiği kadar küçültür ve yazıyı olabildiğince büyük tutar:
+//   1) satır aralığı, bölüm aralığı ve kenar boşluğu rahat alt değere (FINE.soft) iner, yazı aynı kalır;
+//   2) yazı rahat alt değere iner;
+//   3) hepsi birlikte en sıkı değere (FINE.fit) iner.
+// Yol tek yönlü küçüldüğü için ikili arama tek sayfaya sığan en gevşek noktayı bulur. Ölçüm sayfasında dener
+// (ekrandaki sayfa değişmez). Döner: { fits, pages, values } ya da ölçülemiyorsa / zaten tek sayfaysa null.
 export function fitOnePage(root, profile) {
 	const host = root && root.querySelector('.cv-page--measure');
 	if (!host || !host.offsetWidth) return null;
 	const built = buildTemplate(profile);
 	const theme = profile.settings.theme;
 	const from = themeMetrics(theme);
+	const SPACING = ['lineHeight', 'gapPx', 'marginPx'];
+	const lerp = (a, b, k) => a + ((b - a) * Math.min(1, Math.max(0, k)));
 	const at = (t) => {
 		const values = {};
 		Object.keys(FINE).forEach((key) => {
-			const { step, fit } = FINE[key];
-			const to = Math.min(from[key], fit);
-			const stepped = Math.floor(((from[key] + ((to - from[key]) * t)) / step) + 1e-6) * step;
-			values[key] = Math.round(Math.max(to, stepped) * 100) / 100;
+			const { step, soft, fit } = FINE[key];
+			const softTo = Math.min(from[key], soft);
+			const hardTo = Math.min(softTo, fit);
+			const phase = SPACING.includes(key) ? t * 3 : (t * 3) - 1;
+			const v = t <= 2 / 3 ? lerp(from[key], softTo, phase) : lerp(softTo, hardTo, (t * 3) - 2);
+			const stepped = Math.floor((v / step) + 1e-6) * step;
+			values[key] = Math.round(Math.max(hardTo, stepped) * 100) / 100;
 		});
 		return values;
 	};
@@ -101,7 +109,7 @@ export function fitOnePage(root, profile) {
 		if (tightest > 1) return { fits: false, pages: tightest, values: at(1) };
 		let lo = 0;
 		let hi = 1;
-		for (let i = 0; i < 7; i += 1) {
+		for (let i = 0; i < 10; i += 1) {
 			const mid = (lo + hi) / 2;
 			if (pagesAt(at(mid)) <= 1) hi = mid;
 			else lo = mid;
