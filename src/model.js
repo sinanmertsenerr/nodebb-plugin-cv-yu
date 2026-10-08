@@ -64,16 +64,17 @@ export function fontStack(key) {
 }
 
 // Hazır Küçük/Orta/Büyük seçeneklerinin ölçüleri (px; A4 sayfa 794 px genişliğinde, 1 px = 0,75 pt)
-// Orta: 12 px = 9 pt gövde, 1,5 satır aralığı (NextCV'nin oranları, okunur alt sınırın üstünde)
-export const SIZE = { s: 11, m: 12, l: 13 };
-export const LINE = { s: 1.32, m: 1.5, l: 1.65 };
-export const GAP = { s: 12, m: 16, l: 20 };
+// Hazır seçenekler NextCV ile birebir: aynı CV aynı ayarla iki araçta da aynı sayfa sayısını tutsun.
+// Orta yazı 10,5 px (7,9 pt); Küçük/Büyük onun 0,92 ve 1,08 katı.
+export const SIZE = { s: 9.75, m: 10.5, l: 11.25 };
+export const LINE = { s: 1.3, m: 1.5, l: 1.7 };
+export const GAP = { s: 8, m: 12, l: 20 };
 
 // İnce ayar: temada bu alanlardan biri doluysa hazır seçeneğin yerine geçer.
 // fit = "Tek sayfaya sığdır"ın inebileceği en sıkı değer; altı elle seçilebilir ama okunması zorlaşır.
 export const FINE = {
 // soft = "Tek sayfaya sığdır"ın önce indiği rahat değer (yazı NextCV'nin Orta'sı kadar); fit = en son çare
-	sizePx: { min: 8.5, max: 16, step: 0.25, soft: 10.5, fit: 9 },
+	sizePx: { min: 8, max: 14, step: 0.25, soft: 9.5, fit: 8.5 },
 	lineHeight: { min: 1.05, max: 1.9, step: 0.01, soft: 1.3, fit: 1.12 },
 	gapPx: { min: 0, max: 28, step: 1, soft: 8, fit: 2 },
 	marginPx: { min: 14, max: 90, step: 2, soft: 30, fit: 18 },

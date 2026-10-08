@@ -20,8 +20,12 @@ export function themeStyle(theme) {
 	};
 }
 
+// Üst ve alt boşluk en fazla 40 px (NextCV ile aynı): yan boşluk Geniş seçilse de sayfa dikeyde yer kaybetmez
+const MARGIN_Y_MAX = 40;
+
 function geometry(theme, columns) {
 	const margin = themeMetrics(theme).marginPx;
+	const marginY = Math.min(margin, MARGIN_Y_MAX);
 	const contentW = A4.width - (2 * margin);
 	const widths = {};
 	if (columns.length === 1) {
@@ -31,7 +35,7 @@ function geometry(theme, columns) {
 		widths[columns[0].key] = side;
 		widths[columns[1].key] = contentW - side - COL_GAP;
 	}
-	return { margin, contentW, contentH: A4.height - (2 * margin), widths };
+	return { margin, marginY, padding: `${marginY}px ${margin}px`, contentW, contentH: A4.height - (2 * marginY), widths };
 }
 
 function Columns({ built, geo, pageCols }) {
@@ -96,7 +100,7 @@ export function fitOnePage(root, profile) {
 		const tried = { ...theme, ...values };
 		const geo = geometry(tried, built.columns);
 		Object.entries(themeStyle(tried)).forEach(([name, value]) => host.parentNode.style.setProperty(name, value));
-		host.style.padding = `${geo.margin}px`;
+		host.style.padding = geo.padding;
 		built.columns.forEach((col) => {
 			const el = host.querySelector(`[data-col="${col.key}"]`);
 			if (el) el.style.width = `${geo.widths[col.key]}px`;
@@ -186,11 +190,11 @@ export function Preview({ profile, zoom, onLayout, docLang, emptyHint, pageLabel
 	return (
 		<div class={`cv-pages cv-pages--${built.template}`} style={style} lang={docLang} data-scale={scale || ''}>
 			{/* Gizli ölçüm sayfası: gerçek sayfalarla aynı genişlik, yazı tipi ve boşluklar */}
-			<div class="cv-page cv-page--measure" aria-hidden="true" ref={measureRef} style={{ padding: `${geo.margin}px` }}>
+			<div class="cv-page cv-page--measure" aria-hidden="true" ref={measureRef} style={{ padding: geo.padding }}>
 				<Columns built={built} geo={geo} pageCols={allCols} />
 			</div>
 			{(pages || [allCols]).map((pageCols, i, all) => (
-				<section class={`cv-page cv-page--${built.template}`} key={i} aria-label={pageLabels ? pageLabels.page(i + 1) : `${i + 1}`} style={{ padding: `${geo.margin}px` }}>
+				<section class={`cv-page cv-page--${built.template}`} key={i} aria-label={pageLabels ? pageLabels.page(i + 1) : `${i + 1}`} style={{ padding: geo.padding }}>
 					{sideW ? <div class="cv-side-bg" style={{ width: `${sideW}px` }} aria-hidden="true" /> : null}
 					<Columns built={built} geo={geo} pageCols={pageCols} />
 					{i === 0 && emptyHint && isEmpty(profile) ? <div class="cv-empty"><strong>{emptyHint[0]}</strong>{emptyHint[1]}</div> : null}

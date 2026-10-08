@@ -67,7 +67,7 @@ test('NextCV dışa aktarma dosyası (cvData sarmalayıcısı) eksiksiz okunur',
 	const tuned = nextcv();
 	Object.assign(tuned.appSettings.theme, { fontScaleOverride: 0.9, lineHeightOverride: 1.2, pageMarginsOverride: 24, sectionSpacingOverride: 4, sectionSpacing: 'tight', photoVisible: false });
 	const tt = I.readImport(JSON.stringify(tuned), 'tr')[0].settings.theme;
-	assert.deepEqual([tt.sizePx, tt.lineHeight, tt.marginPx, tt.gapPx, tt.gap, tt.photo], [10.75, 1.2, 24, 4, 's', false]);
+	assert.deepEqual([tt.sizePx, tt.lineHeight, tt.marginPx, tt.gapPx, tt.gap, tt.photo], [9.5, 1.2, 24, 4, 's', false]);
 	assert.deepEqual([th.primary, th.accent], [I.DEFAULT_THEME.primary, I.DEFAULT_THEME.accent]);
 	const tinted = nextcv();
 	tinted.appSettings.theme.accentColor = '#FF0000';

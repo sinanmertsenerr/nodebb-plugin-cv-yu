@@ -4,7 +4,8 @@
 // sayfadan uzun bir blok tek başına bir sayfaya konur ve taşmasına izin verilir.
 
 export const A4 = { width: 794, height: 1123 };
-export const MARGINS = { s: 34, m: 46, l: 58 };
+// Yan kenar boşluğu (px); NextCV'nin Dar/Normal/Geniş değerleri. Üst ve alt en fazla 40 px (Preview.jsx).
+export const MARGINS = { s: 30, m: 50, l: 70 };
 
 export function distribute(blocks, pageHeight) {
 	const pages = [];

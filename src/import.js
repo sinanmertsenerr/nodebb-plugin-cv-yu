@@ -412,7 +412,7 @@ function settingsOf(wrapper, lang) {
 	});
 	if (typeof src.sectionTitleStyle === 'string') theme.titleStyle = { uppercase: 'caps', capitalize: 'capitalize' }[src.sectionTitleStyle] || 'normal';
 	if (typeof src.photoVisible === 'boolean') theme.photo = src.photoVisible;
-	// İnce ayarlar: NextCV'nin sayfası da 794 px; yazı ölçeği onun Orta'sına (1) göre, bizim Orta'ya (12 px) uyarlanır
+	// İnce ayarlar: NextCV'nin sayfası da 794 px; yazı ölçeği onun Orta'sına (1) göre, bizim Orta'ya (10,5 px) uyarlanır
 	const num = key => (Number.isFinite(src[key]) ? src[key] : null);
 	if (num('fontScaleOverride') !== null) theme.sizePx = Math.round((SIZE.m * num('fontScaleOverride')) / FINE.sizePx.step) * FINE.sizePx.step;
 	if (num('lineHeightOverride') !== null) theme.lineHeight = num('lineHeightOverride');
